@@ -104,6 +104,16 @@ func TestReposScreenWiring(t *testing.T) {
 		t.Errorf("submenu should be the repo's Git menu:\n%s", out)
 	}
 
+	// esc back, then "v" (the row-level alias, dispatched via Item.Keys) opens the same submenu.
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'v'}})
+	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
+		t.Fatalf("v should open the per-repo Git submenu, got %T", tm.(core.Router).Top())
+	}
+	if out := tm.View(); !strings.Contains(out, "Pull") {
+		t.Errorf("v submenu should be the repo's Git menu:\n%s", out)
+	}
+
 	// esc back, then V opens the all-repos menu.
 	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
 	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'V'}})

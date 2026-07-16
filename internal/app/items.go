@@ -30,12 +30,23 @@ func repoListItems(sh *core.Shared) []list.Item {
 }
 
 // repoRow builds one list row: the repo's base-relative path (plus any warning markers) as the
-// name, its branch as the description, and enter → the shared per-repo git submenu.
+// name, its branch as the description, enter → the shared per-repo git submenu, and the row's own
+// shortcuts (dispatched for the highlighted row by RootUpdate) — "v" the git submenu (an alias of
+// enter) and "t" a terminal at the repo's directory.
 func repoRow(r repo.Repo) components.Item {
 	return components.Item{
 		Name: r.Name + rowMarker(r),
 		Desc: repoDesc(r),
 		Pick: func(sh *core.Shared) core.Action { return core.Push(repoui.RepoMenu(sh, r)) },
+		Keys: func(sh *core.Shared, k string) (core.Action, bool) {
+			switch {
+			case core.MatchKey(k, keys.Git):
+				return core.Push(repoui.RepoMenu(sh, r)), true
+			case core.MatchKey(k, keys.Terminal):
+				return openTerminal(r.Dir), true
+			}
+			return core.Action{}, false
+		},
 	}
 }
 

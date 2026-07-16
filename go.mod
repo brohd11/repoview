@@ -3,8 +3,8 @@ module github.com/brohd11/repoview
 go 1.26.3
 
 require (
-	github.com/brohd11/bubblestack v0.0.0-00010101000000-000000000000
-	github.com/brohd11/gitstack v0.0.0-00010101000000-000000000000
+	github.com/brohd11/bubblestack v0.1.0
+	github.com/brohd11/gitstack v0.1.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 )
@@ -34,9 +34,3 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.3.8 // indirect
 )
-
-// bubblestack (TUI framework) and gitstack (git engine + git-viewing screens) are developed
-// in-tree next to this module; local replaces keep repoview building against the working copies.
-replace github.com/brohd11/bubblestack => ../bubblestack
-
-replace github.com/brohd11/gitstack => ../gitstack

@@ -29,15 +29,34 @@ func repoListItems(sh *core.Shared) []list.Item {
 	return items
 }
 
+// diffViaGitMenu decides what "d" leaves beneath the diff picker.
+//
+// When true, "d" seeds the git submenu under the picker — the same stack pressing "v" and
+// choosing Diff would build. The trail reads "Repos › Git › Diff", and since esc is a
+// one-level pop, backing out of a diff lands on the hub that has Commit. That's the point:
+// reading a diff is the step before committing, and the alternative makes you esc to the list
+// and re-enter via "v" to reach the action the diff just argued for.
+//
+// When false, "d" pushes the picker alone ("Repos › Diff"): esc returns straight to the list,
+// and the git state RepoMenu reads on build is never computed.
+const diffViaGitMenu = true
+
+// diffAction is what "d" does for one repo row — see diffViaGitMenu.
+func diffAction(sh *core.Shared, r repo.Repo) core.Action {
+	if !diffViaGitMenu {
+		return core.Push(repoui.DiffMenu(sh, r))
+	}
+	return core.Seq(
+		core.Push(repoui.RepoMenu(sh, r)),
+		core.Push(repoui.DiffMenu(sh, r)),
+	)
+}
+
 // repoRow builds one list row: the repo's base-relative path (plus any warning markers) as the
 // name, its branch as the description, enter → the shared per-repo git submenu, and the row's own
 // shortcuts (dispatched for the highlighted row by RootUpdate) — "v" the git submenu (an alias of
-// enter), "d" that repo's diff list, and "t" a terminal at the repo's directory.
-//
-// "d" pushes the diff picker directly rather than routing through RepoMenu: reading what changed
-// is the question this list raises (the ⚠ marker says "uncommitted changes" and little else), and
-// it shouldn't cost a stop at a hub to answer. The trail reads "Repos › Diff", and since DiffMenu
-// sets no PopStop, esc returns straight here.
+// enter), "d" that repo's diff list (see diffViaGitMenu for what it opens beneath it), and "t" a
+// terminal at the repo's directory.
 func repoRow(r repo.Repo) components.Item {
 	return components.Item{
 		Name: r.Name + rowMarker(r),
@@ -48,7 +67,7 @@ func repoRow(r repo.Repo) components.Item {
 			case core.MatchKey(k, keys.Git):
 				return core.Push(repoui.RepoMenu(sh, r)), true
 			case core.MatchKey(k, keys.Diff):
-				return core.Push(repoui.DiffMenu(sh, r)), true
+				return diffAction(sh, r), true
 			case core.MatchKey(k, keys.Terminal):
 				return openTerminal(r.Dir), true
 			}

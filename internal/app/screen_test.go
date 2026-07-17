@@ -168,10 +168,10 @@ func dirtyRepoTree(t *testing.T) string {
 	return base
 }
 
-// TestDiffKeyOnRepoRow: "d" on a repo row is the shortcut past the git menu, so what it
-// must prove is that it lands on the same picker enter → Git → Diff reaches, for the
-// highlighted repo — and that esc from there returns to the repo list rather than dropping
-// the user on the menu they never opened.
+// TestDiffKeyOnRepoRow: "d" on a repo row opens the diff picker in one press, so what it must
+// prove is that it lands on the same picker enter → Git → Diff reaches, for the highlighted
+// repo. Where esc from there goes is diffViaGitMenu's call, and the test asserts whichever
+// behavior is compiled in — that's the toggle's whole purpose.
 func TestDiffKeyOnRepoRow(t *testing.T) {
 	tm := sized(router(dirtyRepoTree(t)))
 
@@ -191,8 +191,20 @@ func TestDiffKeyOnRepoRow(t *testing.T) {
 	}
 
 	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
-	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
-		t.Fatalf("esc should return to the repo list, got %T", tm.(core.Router).Top())
+	if !diffViaGitMenu {
+		if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
+			t.Fatalf("esc should return to the repo list, got %T", tm.(core.Router).Top())
+		}
+		return
+	}
+	// The git menu was seeded under the picker, so esc lands on the hub rather than the list —
+	// with Commit right there, which is the reason for seeding it. It was never the top screen
+	// until this pop, so its rows also prove it got laid out on the way up.
+	if _, ok := tm.(core.Router).Top().(*ReposScreen); ok {
+		t.Fatalf("esc should land on the seeded git menu, got the repo list")
+	}
+	if out := tm.View(); !strings.Contains(out, "Commit") {
+		t.Errorf("esc should land on the git menu, with Commit reachable:\n%s", out)
 	}
 }
 

@@ -28,7 +28,7 @@ var _ core.Receiver = (*ReposScreen)(nil)
 var _ core.Crumber = (*ReposScreen)(nil)
 
 func NewReposScreen(sh *core.Shared) *ReposScreen {
-	l := core.NewSelectList(repoListItems(sh), listTitle, keys.Git, keys.Terminal, keys.Fetch, keys.GitAll, keys.Actions)
+	l := core.NewSelectList(repoListItems(sh), listTitle, keys.Git, keys.Diff, keys.Terminal, keys.Fetch, keys.GitAll, keys.Actions)
 	return &ReposScreen{list: l}
 }
 

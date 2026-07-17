@@ -32,7 +32,12 @@ func repoListItems(sh *core.Shared) []list.Item {
 // repoRow builds one list row: the repo's base-relative path (plus any warning markers) as the
 // name, its branch as the description, enter → the shared per-repo git submenu, and the row's own
 // shortcuts (dispatched for the highlighted row by RootUpdate) — "v" the git submenu (an alias of
-// enter) and "t" a terminal at the repo's directory.
+// enter), "d" that repo's diff list, and "t" a terminal at the repo's directory.
+//
+// "d" pushes the diff picker directly rather than routing through RepoMenu: reading what changed
+// is the question this list raises (the ⚠ marker says "uncommitted changes" and little else), and
+// it shouldn't cost a stop at a hub to answer. The trail reads "Repos › Diff", and since DiffMenu
+// sets no PopStop, esc returns straight here.
 func repoRow(r repo.Repo) components.Item {
 	return components.Item{
 		Name: r.Name + rowMarker(r),
@@ -42,6 +47,8 @@ func repoRow(r repo.Repo) components.Item {
 			switch {
 			case core.MatchKey(k, keys.Git):
 				return core.Push(repoui.RepoMenu(sh, r)), true
+			case core.MatchKey(k, keys.Diff):
+				return core.Push(repoui.DiffMenu(sh, r)), true
 			case core.MatchKey(k, keys.Terminal):
 				return openTerminal(r.Dir), true
 			}

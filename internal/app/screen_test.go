@@ -168,6 +168,55 @@ func dirtyRepoTree(t *testing.T) string {
 	return base
 }
 
+// TestDiffKeyOnRepoRow: "d" on a repo row is the shortcut past the git menu, so what it
+// must prove is that it lands on the same picker enter → Git → Diff reaches, for the
+// highlighted repo — and that esc from there returns to the repo list rather than dropping
+// the user on the menu they never opened.
+func TestDiffKeyOnRepoRow(t *testing.T) {
+	tm := sized(router(dirtyRepoTree(t)))
+
+	// down to beta (the dirty one; alpha sorts first), then d.
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+
+	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
+		t.Fatalf("d should open the diff picker directly, got %T", tm.(core.Router).Top())
+	}
+	out := tm.View()
+	if !strings.Contains(out, "beta") || !strings.Contains(out, "wip.txt") {
+		t.Errorf("d should open the picker for the *highlighted* repo:\n%s", out)
+	}
+	if strings.Contains(out, "alpha") {
+		t.Errorf("d opened the wrong repo's diff — alpha is not highlighted:\n%s", out)
+	}
+
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
+	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
+		t.Fatalf("esc should return to the repo list, got %T", tm.(core.Router).Top())
+	}
+}
+
+// TestDiffAllRowIncludesUntracked: the aggregate row counts untracked files in its "N files"
+// and calls itself "every change in one page". It used to ask for `diff HEAD`, which cannot
+// see them — so it promised the new file and rendered without it. Drive the row itself; the
+// engine test is the unit, this is the wiring.
+func TestDiffAllRowIncludesUntracked(t *testing.T) {
+	tm := sized(router(dirtyRepoTree(t)))
+
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter}) // the top row: the whole repo's diff
+
+	out := tm.View()
+	if !strings.Contains(out, "second") {
+		t.Errorf("the aggregate diff should show the tracked file's added line:\n%s", out)
+	}
+	if !strings.Contains(out, "uncommitted") {
+		t.Errorf("the aggregate diff should also show the untracked file's contents "+
+			"— it counts that file in its own description:\n%s", out)
+	}
+}
+
 // TestDiffViewWiring drives the Diff flow the way a user does: down to the dirty repo, into
 // its git menu, into Diff, into a file, then the layout and wrap toggles. It runs against a
 // real git checkout through the real router and the real log pane, which is what makes the

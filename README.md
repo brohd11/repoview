@@ -38,8 +38,32 @@ Flags: `-C/--dir` (scan root, default cwd), `--raw` (stream vs the default captu
 ## Install
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/brohd11/repoview/main/install.sh | sh
+```
+
+Installs into `~/.local/bin`, and offers to add that to your `PATH` if it isn't already.
+Prefer to read before you pipe to a shell? Same thing in two steps:
+
+```bash
+curl -fsSL -o install.sh https://raw.githubusercontent.com/brohd11/repoview/main/install.sh
+less install.sh && sh install.sh
+```
+
+Overrides: `BIN_DIR=/usr/local/bin` to install elsewhere, `VERSION=v0.1.1` to pin a release,
+`--no-modify-path` to leave shell rc files alone.
+
+Covers macOS (arm64/amd64) and Linux (amd64/arm64). On **Windows**, grab the `.zip` from the
+[Releases](https://github.com/brohd11/repoview/releases) page.
+
+With a Go toolchain:
+
+```bash
 go install github.com/brohd11/repoview@latest
 ```
+
+<sub>macOS note: a binary downloaded **in a browser** gets quarantined by Gatekeeper — clear it
+with `xattr -dr com.apple.quarantine path/to/repoview`. This doesn't apply to the installer
+above; the attribute is set by browsers, not by `curl`.</sub>
 
 Built on [bubblestack](https://github.com/brohd11/bubblestack) (TUI framework) and
 [gitstack](https://github.com/brohd11/gitstack) (git engine + screens); it's the manifest-free

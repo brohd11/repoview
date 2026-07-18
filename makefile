@@ -1,39 +1,50 @@
 
-APP_NAME = repoview
-OUT_DIR = build
-DIST_DIR = dist
-VERSION = $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+APP_NAME  = repoview
+OUT_DIR   = build
+DIST_DIR  = dist
+VERSION   = $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+LDFLAGS   = -ldflags "-s -w -X github.com/brohd11/repoview/cmd.version=$(VERSION)"
+PLATFORMS = darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 
-.PHONY: all clean test package package-mac-arm package-linux package-windows
+HOST_OS   = $(shell go env GOOS)
+HOST_ARCH = $(shell go env GOARCH)
 
-all: mac-arm linux windows
+.PHONY: build all test package clean $(PLATFORMS)
+
+# Host build -> build/<os>-<arch>/repoview. Default target so the dev loop
+# (../builds.sh -> make && ./install_unix.sh) compiles one target, not five.
+build:
+	go build $(LDFLAGS) -o $(OUT_DIR)/$(HOST_OS)-$(HOST_ARCH)/$(APP_NAME) .
 
 test:
 	go test ./...
 
-mac-arm:
-	GOOS=darwin GOARCH=arm64 go build -o $(OUT_DIR)/mac-arm64/$(APP_NAME) .
+# Cross-compile every release target.
+all: $(PLATFORMS)
 
-linux:
-	GOOS=linux GOARCH=amd64 go build -o $(OUT_DIR)/linux/$(APP_NAME) .
+$(PLATFORMS):
+	@os=$(word 1,$(subst /, ,$@)); arch=$(word 2,$(subst /, ,$@)); \
+	ext=$$( [ "$$os" = "windows" ] && echo .exe || echo ); \
+	echo "building $$os/$$arch"; \
+	GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 \
+	  go build $(LDFLAGS) -o $(OUT_DIR)/$$os-$$arch/$(APP_NAME)$$ext .
 
-windows:
-	GOOS=windows GOARCH=amd64 go build -o $(OUT_DIR)/windows/$(APP_NAME).exe .
-
-# Build all targets and zip each one into dist/ for a GitHub release.
-package: package-mac-arm package-linux package-windows
-
-package-mac-arm: mac-arm
-	mkdir -p $(DIST_DIR)
-	cd $(OUT_DIR)/mac-arm64 && zip -q -j ../../$(DIST_DIR)/$(APP_NAME)-$(VERSION)-darwin-arm64.zip $(APP_NAME)
-
-package-linux: linux
-	mkdir -p $(DIST_DIR)
-	cd $(OUT_DIR)/linux && zip -q -j ../../$(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-amd64.zip $(APP_NAME)
-
-package-windows: windows
-	mkdir -p $(DIST_DIR)
-	cd $(OUT_DIR)/windows && zip -q -j ../../$(DIST_DIR)/$(APP_NAME)-$(VERSION)-windows-amd64.zip $(APP_NAME).exe
+# Build all targets, then archive each into dist/ for a GitHub release.
+#
+# Archive names are version-less on purpose: it lets install.sh use GitHub's
+# /releases/latest/download/<name> redirect and skip the API entirely. The release
+# tag carries the version. Archives are flat -- one bare executable at the root.
+package: all
+	@mkdir -p $(DIST_DIR); \
+	for p in $(PLATFORMS); do \
+	  os=$${p%/*}; arch=$${p#*/}; \
+	  ext=$$( [ "$$os" = "windows" ] && echo .exe || echo ); \
+	  name=$(APP_NAME)-$$os-$$arch.zip; \
+	  echo "packaging $$name"; \
+	  rm -f $(DIST_DIR)/$$name; \
+	  ( cd $(OUT_DIR)/$$os-$$arch && zip -q -j ../../$(DIST_DIR)/$$name $(APP_NAME)$$ext ); \
+	done; \
+	echo "done -> $(DIST_DIR)/"
 
 clean:
 	rm -rf $(OUT_DIR) $(DIST_DIR)

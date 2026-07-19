@@ -50,7 +50,8 @@ less install.sh && sh install.sh
 ```
 
 Overrides: `BIN_DIR=/usr/local/bin` to install elsewhere, `VERSION=v0.1.1` to pin a release,
-`--no-modify-path` to leave shell rc files alone.
+`--modify-path` to update your shell rc file without prompting (for unattended setup scripts), or
+`--no-modify-path` to leave rc files alone.
 
 Covers macOS (arm64/amd64) and Linux (amd64/arm64). On **Windows**, grab the `.zip` from the
 [Releases](https://github.com/brohd11/repoview/releases) page.

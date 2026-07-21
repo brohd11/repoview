@@ -15,17 +15,18 @@ import (
 )
 
 var (
-	reposDir   string
-	reposRaw   bool
-	reposDirty bool
-	reposDepth int
+	reposDir         string
+	reposRaw         bool
+	reposDirty       bool
+	reposDepth       int
+	reposIncludeRoot bool
 )
 
 var reposCmd = &cobra.Command{
 	Use:   "repos [flags] -- <command...>",
 	Short: "Run a shell command in every git repo nested under a directory",
 	Long: `Walk a directory tree, find every nested git repo (the top-level repo is
-excluded), and run a shell command inside each one.
+excluded unless --include-root), and run a shell command inside each one.
 
 The command is joined and run via "sh -c", so pipes, &&, and redirects work — quote
 them as a single argument so your own shell doesn't consume them first:
@@ -50,6 +51,7 @@ func init() {
 	reposCmd.Flags().BoolVar(&reposRaw, "raw", false, "live-stream each repo's output instead of capturing it")
 	reposCmd.Flags().BoolVar(&reposDirty, "dirty", false, "only repos with uncommitted changes")
 	reposCmd.Flags().IntVar(&reposDepth, "depth", 1, "max directory depth to search")
+	reposCmd.Flags().BoolVar(&reposIncludeRoot, "include-root", false, "also run in the top-level repo (the scanned dir itself)")
 	rootCmd.AddCommand(reposCmd)
 }
 
@@ -73,6 +75,14 @@ func runRepos(cmd *cobra.Command, args []string) error {
 	repos, err := repo.FindGitRepos(base, reposDepth)
 	if err != nil {
 		return err
+	}
+	// FindGitRepos excludes the base itself; --include-root opts it back in as the "." entry, which
+	// flows through the dirty filter and both output modes unchanged (base-relative "." resolves to
+	// base). Only when base is actually a checkout.
+	if reposIncludeRoot {
+		if _, ok := repo.DescribeRoot(base); ok {
+			repos = append([]string{"."}, repos...)
+		}
 	}
 	if reposDirty {
 		dirty := repos[:0:0]

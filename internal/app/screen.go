@@ -28,35 +28,46 @@ var _ core.Receiver = (*ReposScreen)(nil)
 var _ core.Crumber = (*ReposScreen)(nil)
 
 func NewReposScreen(sh *core.Shared) *ReposScreen {
-	l := core.NewSelectList(repoListItems(sh), listTitle, keys.Git, keys.Diff, keys.Terminal, keys.Fetch, keys.GitAll, keys.Actions)
+	l := core.NewSelectList(repoListItems(sh), listTitle, keys.Git, keys.Diff, keys.Terminal, keys.Fetch, keys.GitAll, keys.RootGit, keys.Actions)
 	return &ReposScreen{list: l}
 }
 
-func (s *ReposScreen) Init(*core.Shared) tea.Cmd       { return nil }
-func (s *ReposScreen) Filtering() bool                 { return s.list.FilterState() == list.Filtering }
-func (s *ReposScreen) View(*core.Shared) string        { return s.list.View() }
-func (s *ReposScreen) HelpView(*core.Shared) string    { return core.ShortHelp(s.list, core.HelpTabbed) }
+func (s *ReposScreen) Init(*core.Shared) tea.Cmd        { return nil }
+func (s *ReposScreen) Filtering() bool                  { return s.list.FilterState() == list.Filtering }
+func (s *ReposScreen) View(*core.Shared) string         { return s.list.View() }
+func (s *ReposScreen) HelpView(*core.Shared) string     { return core.ShortHelp(s.list, core.HelpTabbed) }
 func (s *ReposScreen) SetSize(_ *core.Shared, w, h int) { s.list.SetSize(w, h) }
-func (s *ReposScreen) CrumbLabel(bool) string          { return "Repos" }
+func (s *ReposScreen) CrumbLabel(bool) string           { return "Repos" }
 
 func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Action) {
 	// The tab's own keys, gated behind the filter guard so they don't hijack filter typing.
 	if k, ok := msg.(tea.KeyMsg); ok && !s.Filtering() {
 		switch {
 		// "V" opens the all-repos git page (fetch/pull/push across every scanned repo). The
-		// per-repo page is enter on a row (the row's own Pick).
+		// per-repo page is enter on a row (the row's own Pick). It fires when there's anything
+		// to act on — nested repos or the base itself — and hands the menu a RootOption so the
+		// base can be toggled into the batch's targets.
 		case core.MatchKey(k.String(), keys.GitAll):
-			if len(Of(sh).Repos) == 0 {
+			if c := Of(sh); len(c.Repos) == 0 && c.RootRepo == nil {
 				return s, core.SetStatus("no repos to act on")
 			}
-			return s, core.Push(repoui.AllReposMenu(sh, allScope()))
+			return s, core.Push(repoui.AllReposMenu(sh, allScope(),
+				repoui.RootOptionFor(func(sh *core.Shared) *repo.Repo { return Of(sh).RootRepo })))
+		// "ctrl+v" opens the root's own git menu — the same RepoMenu a nested repo's row opens,
+		// handed the base itself. "V" puts the root in the batch; ctrl+v works it on its own.
+		case core.MatchKey(k.String(), keys.RootGit):
+			c := Of(sh)
+			if c.RootRepo == nil {
+				return s, core.SetStatus("base directory is not a git checkout")
+			}
+			return s, core.Push(repoui.RepoMenu(sh, *c.RootRepo))
 		// "f" fetches every repo concurrently so the ahead/behind markers can see new upstream
 		// commits. Network-bound, hence explicit.
 		case core.MatchKey(k.String(), keys.Fetch):
 			if s.fetching {
 				return s, core.SetStatus("fetch already running")
 			}
-			if len(Of(sh).Repos) == 0 {
+			if c := Of(sh); len(c.Repos) == 0 && c.RootRepo == nil {
 				return s, core.SetStatus("no repos to fetch")
 			}
 			s.fetching = true
@@ -84,14 +95,14 @@ func (s *ReposScreen) Receive(sh *core.Shared, payload any) core.Action {
 	case fetchDone:
 		s.fetching = false
 		for _, r := range p.results {
-			sh.Log(fetchLine(r))
+			sh.Log(repo.FetchLine(r))
 		}
 		Of(sh).Scan()
 		s.list.SetItems(repoListItems(sh))
 		if len(p.results) == 0 {
 			return core.SetStatus("no repos fetched")
 		}
-		line, failed := fetchSummary(p.results)
+		line, failed := repo.FetchSummary(p.results, "repo(s)")
 		return core.SetStatusAndLog(line, failed) // force the log open only to show a failure
 	}
 	return core.Action{}

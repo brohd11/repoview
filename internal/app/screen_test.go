@@ -155,6 +155,121 @@ func TestReposScreenWiring(t *testing.T) {
 	}
 }
 
+// checkoutBase turns the scanned base itself into a git checkout (twoRepoTree only inits the
+// nested alpha/beta), so the header/fetch/batch root handling has a root to work with.
+func checkoutBase(t *testing.T, base string) {
+	t.Helper()
+	cmd := exec.Command("git", "-C", base, "init", "-q", "-b", "main")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v\n%s", err, out)
+	}
+}
+
+// TestRootStatusInHeader: the scanned base is itself a git checkout, but it never appears as a
+// list row — its status shows on the header's Root: line instead. Make it dirty and the marker
+// lands there, right beside the path.
+func TestRootStatusInHeader(t *testing.T) {
+	base := twoRepoTree(t) // alpha + beta nested under base
+	checkoutBase(t, base)
+	os.WriteFile(filepath.Join(base, "wip.txt"), []byte("uncommitted"), 0o644) // make the root dirty
+
+	tm := sized(router(base))
+
+	// The header's Root: line carries the dirty marker.
+	found := false
+	for _, line := range strings.Split(tm.View(), "\n") {
+		if strings.Contains(line, "Root:") {
+			if !strings.Contains(line, "⚠ [uncommitted changes]") {
+				t.Errorf("the Root: line should carry the root repo's dirty marker:\n%s", line)
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("no Root: line in the rendered view:\n%s", tm.View())
+	}
+
+	// The root is not a list row: nothing renders the ⌂ marker anywhere.
+	if out := tm.View(); strings.Contains(out, "⌂") {
+		t.Errorf("the root repo must not appear as a list row:\n%s", out)
+	}
+	// And the list is the nested checkouts only.
+	if out := tm.View(); !strings.Contains(out, "alpha") || !strings.Contains(out, "beta") {
+		t.Errorf("the list should still show the nested repos:\n%s", out)
+	}
+}
+
+// TestAllReposIncludeRoot: with the base a checkout, the V menu offers a "⌂ Include root" toggle
+// row, and switching it on adds the root to the batch's targets — the fetch confirm lists all
+// three repos (alpha, beta, root) instead of two.
+func TestAllReposIncludeRoot(t *testing.T) {
+	base := twoRepoTree(t)
+	checkoutBase(t, base)
+
+	tm := sized(router(base))
+
+	// V opens the all-repos menu, with the include-root toggle off by default.
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'V'}})
+	if out := tm.View(); !strings.Contains(out, "⌂ Include root: off") {
+		t.Fatalf("the all-repos menu should offer the include-root toggle:\n%s", out)
+	}
+
+	// Down to the toggle row (below Fetch/Pull/Push all) and enter to switch it on.
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter})
+	if out := tm.View(); !strings.Contains(out, "⌂ Include root: on") {
+		t.Fatalf("enter on the toggle row should switch it on:\n%s", out)
+	}
+
+	// Back to the top row (Fetch all) and into its confirm: the root joins the targets (2 + 1 = 3).
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'g'}})
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter})
+	if out := tm.View(); !strings.Contains(out, "Fetch 3 repo(s)") {
+		t.Errorf("with the root included, the fetch confirm should target 3 repos:\n%s", out)
+	}
+}
+
+// TestRootGitKey: "ctrl+v" opens the scanned root's own git menu — the same RepoMenu a nested
+// repo's row opens, handed the base itself — when the base is a checkout, and just says so on
+// the status line when it isn't.
+func TestRootGitKey(t *testing.T) {
+	base := twoRepoTree(t)
+	checkoutBase(t, base)
+
+	tm := sized(router(base))
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyCtrlV})
+
+	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
+		t.Fatalf("ctrl+v should open the root's Git menu (PickerScreen), got %T", tm.(core.Router).Top())
+	}
+	if out := tm.View(); !strings.Contains(out, "⟳ Fetch") || !strings.Contains(out, "Commit") {
+		t.Errorf("the root's Git menu should offer the per-repo ops:\n%s", out)
+	}
+	// esc returns to the list.
+	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
+	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
+		t.Fatalf("esc should return to the repo list, got %T", tm.(core.Router).Top())
+	}
+}
+
+// TestRootGitKeyNotACheckout: with a plain base directory, ctrl+v doesn't navigate — the list
+// stays on top and the status line explains why.
+func TestRootGitKeyNotACheckout(t *testing.T) {
+	tm := sized(router(twoRepoTree(t))) // base is not a checkout
+	// No pump: the status auto-clear rides the returned cmd's timer, which a pump would run
+	// synchronously and wipe the line before the assert.
+	tm, _ = tm.Update(tea.KeyMsg{Type: tea.KeyCtrlV})
+
+	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
+		t.Fatalf("ctrl+v on a non-checkout base should not navigate, got %T", tm.(core.Router).Top())
+	}
+	if out := tm.View(); !strings.Contains(out, "not a git checkout") {
+		t.Errorf("the status line should explain why nothing opened:\n%s", out)
+	}
+}
+
 // dirtyRepoTree is twoRepoTree plus a real edit to a tracked file in beta, so there is an
 // actual diff to render rather than only an untracked file.
 func dirtyRepoTree(t *testing.T) string {
@@ -191,15 +306,9 @@ func TestDiffKeyOnRepoRow(t *testing.T) {
 	}
 
 	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
-	if !diffViaGitMenu {
-		if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
-			t.Fatalf("esc should return to the repo list, got %T", tm.(core.Router).Top())
-		}
-		return
-	}
-	// The git menu was seeded under the picker, so esc lands on the hub rather than the list —
-	// with Commit right there, which is the reason for seeding it. It was never the top screen
-	// until this pop, so its rows also prove it got laid out on the way up.
+	// The git menu was seeded under the picker (repoui.DiffAction), so esc lands on the hub
+	// rather than the list — with Commit right there, which is the reason for seeding it. It was
+	// never the top screen until this pop, so its rows also prove it got laid out on the way up.
 	if _, ok := tm.(core.Router).Top().(*ReposScreen); ok {
 		t.Fatalf("esc should land on the seeded git menu, got the repo list")
 	}

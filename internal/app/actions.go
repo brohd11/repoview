@@ -15,7 +15,7 @@ func actionsMenu(sh *core.Shared) *components.PickerScreen {
 		components.Item{
 			Name: "◑ Theme",
 			Desc: "switch the color theme",
-			Pick: func(sh *core.Shared) core.Action { return core.Push(themePicker()) },
+			Pick: func(sh *core.Shared) core.Action { return core.Push(components.ThemePicker()) },
 		},
 		components.Item{
 			Name: "⟳ Refresh",

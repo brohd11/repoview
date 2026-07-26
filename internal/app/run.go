@@ -4,6 +4,7 @@ import (
 	"github.com/brohd11/bubblestack"
 	"github.com/brohd11/bubblestack/components"
 	"github.com/brohd11/bubblestack/core"
+	"github.com/brohd11/bubblestack/sysopen"
 )
 
 // Run scans root for git repos and launches the repoview TUI: a single repo-list tab (so
@@ -20,6 +21,7 @@ func Run(root string, depth int) error {
 		Tabs: []bubblestack.TabEntry{
 			{Title: "Repos", New: func(sh *core.Shared) core.Screen { return NewReposScreen(sh) }},
 		},
-		RefreshAction: func(sh *core.Shared) core.Action { return refreshAction(sh) },
+		RefreshAction:  func(sh *core.Shared) core.Action { return refreshAction(sh) },
+		TerminalAction: func(dir string) core.Action { return sysopen.Terminal(dir) },
 	})
 }

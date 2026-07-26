@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/brohd11/bubblestack/components"
 	"github.com/brohd11/bubblestack/core"
+	"github.com/brohd11/bubblestack/sysopen"
 	"github.com/brohd11/gitstack/repo"
 	"github.com/brohd11/gitstack/repoui"
 
@@ -43,7 +44,7 @@ func repoRow(r repo.Repo) components.Item {
 			case core.MatchKey(k, keys.Diff):
 				return repoui.DiffAction(sh, r), true
 			case core.MatchKey(k, keys.Terminal):
-				return openTerminal(r.Dir), true
+				return sysopen.Terminal(r.Dir), true
 			}
 			return core.Action{}, false
 		},

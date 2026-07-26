@@ -45,6 +45,8 @@ func repoRow(r repo.Repo) components.Item {
 				return repoui.DiffAction(sh, r), true
 			case core.MatchKey(k, keys.Terminal):
 				return sysopen.Terminal(r.Dir), true
+			case core.MatchKey(k, keys.OpenDir):
+				return sysopen.Path(r.Dir, false), true
 			}
 			return core.Action{}, false
 		},

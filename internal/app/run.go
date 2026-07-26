@@ -23,5 +23,6 @@ func Run(root string, depth int) error {
 		},
 		RefreshAction:  func(sh *core.Shared) core.Action { return refreshAction(sh) },
 		TerminalAction: func(dir string) core.Action { return sysopen.Terminal(dir) },
+		OpenDirAction:  func(dir string) core.Action { return sysopen.Path(dir, false) },
 	})
 }

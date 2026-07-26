@@ -9,6 +9,7 @@ var keys = struct {
 	Git      key.Binding // open the highlighted repo's git menu (alias of enter)
 	Diff     key.Binding // open the highlighted repo's diff list, skipping the git menu
 	Terminal key.Binding // open an OS terminal at the highlighted repo's directory
+	OpenDir  key.Binding // open the highlighted repo's directory in the OS file manager
 	GitAll   key.Binding // open the all-repos git menu (fetch/pull/push across every repo)
 	RootGit  key.Binding // open the scanned root's own git menu (the base directory itself)
 	Fetch    key.Binding // concurrent fetch-all, refreshing ahead/behind
@@ -19,6 +20,7 @@ var keys = struct {
 	Git:      key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "git")),
 	Diff:     key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "diff")),
 	Terminal: key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "terminal")),
+	OpenDir:  key.NewBinding(key.WithKeys("T"), key.WithHelp("T", "open dir")),
 	GitAll:   key.NewBinding(key.WithKeys("V"), key.WithHelp("V", "git all")),
 	RootGit:  key.NewBinding(key.WithKeys("ctrl+v"), key.WithHelp("ctrl+v", "root git")),
 	Fetch:    key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "fetch all")),

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/brohd11/repoview/internal/selfupdate"
+	"github.com/brohd11/goutil/selfupdate"
 
 	"github.com/brohd11/bubblestack/components"
 	"github.com/brohd11/bubblestack/core"
@@ -16,6 +16,9 @@ import (
 // selfUpdateCheckTimeout caps the release-check fetch so a slow or unreachable host can hang
 // neither the loading screen behind the Actions flow nor the startup check.
 const selfUpdateCheckTimeout = 30 * time.Second
+
+// selfUpdateRepo is repoview's own GitHub repo slug, passed to the shared self-update library.
+const selfUpdateRepo = "brohd11/repoview"
 
 // selfUpdateInfoMsg carries the self-update check result from the background fetch to
 // the loading screen's result handler.
@@ -33,7 +36,7 @@ func newSelfUpdateLoading(sh *core.Shared) *components.LoadingScreen {
 		return func() tea.Msg {
 			ctx, cancel := context.WithTimeout(parent, selfUpdateCheckTimeout)
 			defer cancel()
-			info, err := selfupdate.Check(ctx, version)
+			info, err := selfupdate.Check(ctx, selfUpdateRepo, version)
 			return selfUpdateInfoMsg{info: info, err: err}
 		}
 	}
@@ -68,7 +71,10 @@ func newSelfUpdateConfirm(info selfupdate.Info) *components.DialogScreen {
 // that a relaunch picks up the new binary.
 func newSelfUpdateTask(info selfupdate.Info) *components.TaskScreen {
 	run := func(ctx context.Context, sh *core.Shared, report func(string, ...any), done chan<- core.TaskEvent) {
-		err := selfupdate.Apply(ctx, info, report)
+		binDir, err := selfupdate.BinDir()
+		if err == nil {
+			err = selfupdate.Apply(ctx, selfUpdateRepo, info, binDir, report)
+		}
 		done <- core.TaskEvent{Done: true, Err: err}
 	}
 	onDone := func(sh *core.Shared, ev core.TaskEvent) core.Action {
@@ -96,7 +102,7 @@ func SelfUpdateCheckCmd(sh *core.Shared) tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), selfUpdateCheckTimeout)
 		defer cancel()
-		info, err := selfupdate.Check(ctx, version)
+		info, err := selfupdate.Check(ctx, selfUpdateRepo, version)
 		if err != nil || !info.Available {
 			return nil
 		}

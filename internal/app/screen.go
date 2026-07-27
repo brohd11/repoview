@@ -19,7 +19,7 @@ const listTitle = "Repos"
 type ReposScreen struct {
 	list list.Model
 	// fetching guards against a second f fanning out a duplicate set of fetches while the
-	// first is still running; cleared when its fetchDone arrives.
+	// first is still running; cleared when its repoui.FetchDoneMsg arrives.
 	fetching bool
 }
 
@@ -85,25 +85,18 @@ func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Ac
 
 // Receive rebuilds the list from a fresh scan on repoview's own RescanMsg (the Refresh
 // action / "r") or the shared git flows' repoui.RefreshMsg (raised after a pull/push/commit/
-// single fetch) — both mean "the tree changed, re-read it". fetchDone additionally logs each
-// repo's outcome and summarizes.
+// single fetch) — both mean "the tree changed, re-read it". repoui.FetchDoneMsg additionally
+// logs each repo's outcome and summarizes (repoui.LogFetchResults).
 func (s *ReposScreen) Receive(sh *core.Shared, payload any) core.Action {
 	switch p := payload.(type) {
 	case repoui.RefreshMsg, RescanMsg:
 		Of(sh).Scan()
 		s.list.SetItems(repoListItems(sh))
-	case fetchDone:
+	case repoui.FetchDoneMsg:
 		s.fetching = false
-		for _, r := range p.results {
-			sh.Log(repo.FetchLine(r))
-		}
 		Of(sh).Scan()
 		s.list.SetItems(repoListItems(sh))
-		if len(p.results) == 0 {
-			return core.SetStatus("no repos fetched")
-		}
-		line, failed := repo.FetchSummary(p.results, "repo(s)")
-		return core.SetStatusAndLog(line, failed) // force the log open only to show a failure
+		return repoui.LogFetchResults(sh, p.Results, "repo(s)", "no repos fetched")
 	}
 	return core.Action{}
 }

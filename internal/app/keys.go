@@ -14,6 +14,7 @@ var keys = struct {
 	RootGit  key.Binding // open the scanned root's own git menu (the base directory itself)
 	Fetch    key.Binding // concurrent fetch-all, refreshing ahead/behind
 	Actions  key.Binding // open the Actions menu (theme, refresh)
+	Sort     key.Binding // cycle the repo list's sort order (A→Z / Z→A / status)
 }{
 	// v/d/t are row-level (dispatched via the highlighted row's Item.Keys). v = version control,
 	// mirroring gdaddon — not g/G, which bubbles reserves for jump-to-top/bottom on every list.
@@ -25,4 +26,5 @@ var keys = struct {
 	RootGit:  key.NewBinding(key.WithKeys("ctrl+v"), key.WithHelp("ctrl+v", "root git")),
 	Fetch:    key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "fetch all")),
 	Actions:  key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "actions")),
+	Sort:     key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sort")),
 }

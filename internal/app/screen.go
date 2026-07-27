@@ -18,6 +18,9 @@ const listTitle = "Repos"
 // refresh story is "re-scan the directory".
 type ReposScreen struct {
 	list list.Model
+	// sort is the active list ordering, cycled by "s"; the builder reads it and Receive
+	// preserves it across a rescan.
+	sort components.SortMode
 	// fetching guards against a second f fanning out a duplicate set of fetches while the
 	// first is still running; cleared when its repoui.FetchDoneMsg arrives.
 	fetching bool
@@ -28,7 +31,8 @@ var _ core.Receiver = (*ReposScreen)(nil)
 var _ core.Crumber = (*ReposScreen)(nil)
 
 func NewReposScreen(sh *core.Shared) *ReposScreen {
-	l := core.NewSelectList(repoListItems(sh), listTitle, keys.Git, keys.Diff, keys.Terminal, keys.OpenDir, keys.Fetch, keys.GitAll, keys.RootGit, keys.Actions)
+	l := core.NewSelectList(repoListItems(sh, components.SortAlpha), components.SortTitle(listTitle, components.SortAlpha),
+		keys.Git, keys.Diff, keys.Terminal, keys.OpenDir, keys.Fetch, keys.GitAll, keys.RootGit, keys.Actions, keys.Sort)
 	return &ReposScreen{list: l}
 }
 
@@ -78,6 +82,12 @@ func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Ac
 		// "a" opens the small Actions menu (theme, refresh).
 		case core.MatchKey(k.String(), keys.Actions):
 			return s, core.Push(actionsMenu(sh))
+		// "s" cycles the sort order (A→Z / Z→A / status), rebuilding the list in place
+		// and keeping the cursor on the same repo.
+		case core.MatchKey(k.String(), keys.Sort):
+			components.CycleSort(&s.list, &s.sort, repoSortModes, listTitle,
+				func(m components.SortMode) []list.Item { return repoListItems(sh, m) })
+			return s, core.Action{}
 		}
 	}
 	return s, components.RootUpdate(sh, &s.list, msg)
@@ -91,11 +101,11 @@ func (s *ReposScreen) Receive(sh *core.Shared, payload any) core.Action {
 	switch p := payload.(type) {
 	case repoui.RefreshMsg, RescanMsg:
 		Of(sh).Scan()
-		s.list.SetItems(repoListItems(sh))
+		s.list.SetItems(repoListItems(sh, s.sort))
 	case repoui.FetchDoneMsg:
 		s.fetching = false
 		Of(sh).Scan()
-		s.list.SetItems(repoListItems(sh))
+		s.list.SetItems(repoListItems(sh, s.sort))
 		return repoui.LogFetchResults(sh, p.Results, "repo(s)", "no repos fetched")
 	}
 	return core.Action{}

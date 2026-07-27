@@ -1,6 +1,9 @@
 package app
 
 import (
+	"sort"
+	"strings"
+
 	"github.com/brohd11/bubblestack/components"
 	"github.com/brohd11/bubblestack/core"
 	"github.com/brohd11/bubblestack/sysopen"
@@ -10,9 +13,13 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 )
 
-// repoListItems builds the list contents from the last scan: one row per repo, or a single
-// inert placeholder when the directory holds no git checkouts.
-func repoListItems(sh *core.Shared) []list.Item {
+// repoSortModes is the repo list's sort cycle: A→Z, Z→A, then status (attention-worthy
+// repos first). Passed to components.CycleSort by ReposScreen's "s" handler.
+var repoSortModes = []components.SortMode{components.SortAlpha, components.SortReverse, components.SortStatus}
+
+// repoListItems builds the list contents from the last scan, ordered per mode: one row
+// per repo, or a single inert placeholder when the directory holds no git checkouts.
+func repoListItems(sh *core.Shared, mode components.SortMode) []list.Item {
 	repos := Of(sh).Repos
 	if len(repos) == 0 {
 		return []list.Item{components.Item{
@@ -20,11 +27,62 @@ func repoListItems(sh *core.Shared) []list.Item {
 			Desc: "nothing under this directory has a .git — try a different path or -depth",
 		}}
 	}
-	items := make([]list.Item, len(repos))
-	for i, r := range repos {
+	sorted := make([]repo.Repo, len(repos))
+	copy(sorted, repos)
+	sortRepos(sorted, mode)
+	items := make([]list.Item, len(sorted))
+	for i, r := range sorted {
 		items[i] = repoRow(r)
 	}
 	return items
+}
+
+// sortRepos reorders repos in place for the chosen mode: A→Z / Z→A by name
+// (case-insensitive), or by repoRank (git state) with a name tie-break. Sorting the
+// repo.Repo values — not the finished rows — keeps the status mode keyed on real git
+// state rather than the marker-suffixed row Title.
+func sortRepos(repos []repo.Repo, mode components.SortMode) {
+	name := func(i int) string { return strings.ToLower(repos[i].Name) }
+	switch mode {
+	case components.SortReverse:
+		sort.SliceStable(repos, func(i, j int) bool { return name(i) > name(j) })
+	case components.SortStatus:
+		sort.SliceStable(repos, func(i, j int) bool {
+			ri, rj := repoRank(repos[i]), repoRank(repos[j])
+			if ri != rj {
+				return ri < rj
+			}
+			return name(i) < name(j)
+		})
+	default: // SortAlpha
+		sort.SliceStable(repos, func(i, j int) bool { return name(i) < name(j) })
+	}
+}
+
+// Attention tiers for SortStatus, most-urgent (lowest) first: behind upstream (there's
+// something to pull), then uncommitted changes, then unpushed local commits
+// (informational), then a clean/settled checkout.
+const (
+	rankBehind = iota // behind its upstream
+	rankDirty         // uncommitted changes
+	rankAhead         // unpushed local commits
+	rankClean         // nothing to report
+)
+
+// repoRank scores a repo for the status sort. Any flag can only raise urgency (take the
+// minimum), so a behind+dirty repo ranks "behind".
+func repoRank(r repo.Repo) int {
+	rank := rankClean
+	if r.Sync.Ahead > 0 && rankAhead < rank {
+		rank = rankAhead
+	}
+	if r.Dirty && rankDirty < rank {
+		rank = rankDirty
+	}
+	if r.Sync.Behind > 0 && rankBehind < rank {
+		rank = rankBehind
+	}
+	return rank
 }
 
 // repoRow builds one list row: the repo's base-relative path (plus any warning markers) as the

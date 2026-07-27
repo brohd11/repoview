@@ -1,21 +1,28 @@
 package app
 
 import (
+	"github.com/brohd11/repoview/internal/app/docs"
+
 	"github.com/brohd11/bubblestack/components"
 	"github.com/brohd11/bubblestack/core"
 
 	"github.com/charmbracelet/bubbles/list"
 )
 
-// actionsMenu is the small Actions picker opened with "a": switch the theme, self-update, or
-// refresh (rescan the directory). PopStop makes it the hub its sub-flows (the theme picker, the
-// update flow) return to.
+// actionsMenu is the small Actions picker opened with "a": switch the theme, browse the docs,
+// self-update, or refresh (rescan the directory). PopStop makes it the hub its sub-flows (the
+// theme picker, the docs index, the update flow) return to.
 func actionsMenu(sh *core.Shared) *components.PickerScreen {
 	items := []list.Item{
 		components.Item{
 			Name: "◑ Theme",
 			Desc: "switch the color theme",
 			Pick: func(sh *core.Shared) core.Action { return core.Push(components.ThemePicker()) },
+		},
+		components.Item{
+			Name: "? Docs",
+			Desc: "getting started, controls, git menu",
+			Pick: func(sh *core.Shared) core.Action { return core.Push(docs.Index()) },
 		},
 		components.Item{
 			Name: "⟲ Update repoview",

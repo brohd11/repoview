@@ -7,15 +7,20 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 )
 
-// actionsMenu is the small Actions picker opened with "a": switch the theme, or refresh
-// (rescan the directory). PopStop makes it the hub its sub-flows (the theme picker) return to.
-// Self-update is deferred until repoview has a release pipeline, so it isn't listed yet.
+// actionsMenu is the small Actions picker opened with "a": switch the theme, self-update, or
+// refresh (rescan the directory). PopStop makes it the hub its sub-flows (the theme picker, the
+// update flow) return to.
 func actionsMenu(sh *core.Shared) *components.PickerScreen {
 	items := []list.Item{
 		components.Item{
 			Name: "◑ Theme",
 			Desc: "switch the color theme",
 			Pick: func(sh *core.Shared) core.Action { return core.Push(components.ThemePicker()) },
+		},
+		components.Item{
+			Name: "⟲ Update repoview",
+			Desc: "check for a newer repoview release and install it",
+			Pick: func(sh *core.Shared) core.Action { return core.Push(newSelfUpdateLoading(sh)) },
 		},
 		components.Item{
 			Name: "⟳ Refresh",

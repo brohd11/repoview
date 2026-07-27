@@ -9,9 +9,10 @@ import (
 // scan root/depth and the repos found by the last scan. There is no manifest — the list is
 // simply whatever a fresh scan of Root turns up, which is the whole point of the tool.
 type Ctx struct {
-	Root  string
-	Depth int
-	Repos []repo.Repo
+	Root    string
+	Depth   int
+	Version string
+	Repos   []repo.Repo
 	// RootRepo is the scanned base itself, when it is a git checkout (nil otherwise). It never
 	// rides Repos — the list is nested checkouts only. The header reads it to show the root's
 	// own status marker, fetch-all appends it to the fetch set, and the all-repos menu offers
@@ -20,8 +21,9 @@ type Ctx struct {
 }
 
 // New builds the context and performs the initial scan, so the first screen has rows to show.
-func New(root string, depth int) *Ctx {
-	c := &Ctx{Root: root, Depth: depth}
+// version is the binary's version string, used by the self-update check.
+func New(root string, depth int, version string) *Ctx {
+	c := &Ctx{Root: root, Depth: depth, Version: version}
 	c.Scan()
 	return c
 }

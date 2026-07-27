@@ -14,7 +14,7 @@ repoview [dir] [depth]   # TUI; dir defaults to the current directory, depth to 
 
 Keys: **enter** (or **v**) opens the highlighted repo's git menu (status/fetch/pull/push/commit),
 **t** opens a terminal at that repo's directory, **V** the all-repos batch menu (fetch/pull/push
-everything), **f** a concurrent fetch-all, **a** the Actions menu (theme, refresh), **r** refresh
+everything), **f** a concurrent fetch-all, **a** the Actions menu (theme, self-update, refresh), **r** refresh
 (rescan). It is deliberately not a full git client — `pull` is fast-forward-only and anything
 needing a decision fails cleanly and sends you to a terminal.
 
@@ -33,7 +33,22 @@ repoview repos -C /path --depth 3 -- pwd
 ```
 
 Flags: `-C/--dir` (scan root, default cwd), `--raw` (stream vs the default capture), `--dirty`,
-`--depth` (default 1). More subcommands (`install`, `update`) are planned.
+`--depth` (default 1).
+
+### `update` subcommand
+
+Self-update: compare this binary's version against the latest GitHub release and, when a newer
+one exists, download and install it over the running binary (same `install.sh` as the curl
+install below, pointed at this binary's directory):
+
+```
+repoview update           # install the update when one is available
+repoview update --check   # only report current/latest and whether an update exists
+```
+
+`dev` builds (a plain `go build`, not stamped by the makefile) are never offered an update.
+The TUI surfaces the same flow: an "update available" note on the status line at startup, and
+**a** → **Update repoview** in the Actions menu.
 
 ## Install
 

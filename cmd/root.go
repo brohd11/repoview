@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// version is the binary version; defaults to "dev" for a plain `go build`. (No ldflags injection
-// yet — the makefile doesn't set it — but Version is wired so `repoview --version` works and a
-// future -X can fill it in, mirroring gdaddon.)
+// version is the binary version; defaults to "dev" for a plain `go build`. The makefile stamps
+// it via -X ldflags (git describe --tags --always --dirty), so release and `make` binaries report
+// their real version and the self-update check can compare it against the latest tag.
 var version = "dev"
 
 var rootDepth int
@@ -64,5 +64,5 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return app.Run(abs, depth)
+	return app.Run(abs, depth, version)
 }

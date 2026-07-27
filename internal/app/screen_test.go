@@ -61,7 +61,7 @@ func router(root string) core.Router {
 // hold the reference from construction.
 func routerWithPane(root string) (core.Router, *components.LogPane) {
 	pane := components.NewLogPane()
-	sh := core.NewShared(New(root, 5))
+	sh := core.NewShared(New(root, 5, "dev"))
 	sh.Chrome = &core.Chrome{Header: core.NewHeaderPane(Header), Output: pane, Status: components.NewStatusLine()}
 	return core.NewRouter(sh, []core.TabEntry{
 		{Title: "Repos", New: func(sh *core.Shared) core.Screen { return NewReposScreen(sh) }},

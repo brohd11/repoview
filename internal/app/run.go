@@ -17,7 +17,9 @@ func Run(root string, depth int, version string) error {
 	return bubblestack.Run(bubblestack.Config{
 		App:    New(root, depth, version),
 		Header: Header,
-		Output: components.NewLogPane(),
+		// A header click opens the root's own git menu, same as ctrl+v.
+		HeaderClick: func(sh *core.Shared, _, _ int) core.Action { return rootGitAction(sh) },
+		Output:      components.NewLogPane(),
 		Status: components.NewStatusLine(),
 		// Theme left unset — bubblestack.Run applies the shared ~/.bubblestack theme.
 		Tabs: []bubblestack.TabEntry{

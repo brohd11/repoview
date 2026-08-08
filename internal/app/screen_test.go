@@ -62,7 +62,9 @@ func router(root string) core.Router {
 func routerWithPane(root string) (core.Router, *components.LogPane) {
 	pane := components.NewLogPane()
 	sh := core.NewShared(New(root, 5, "dev"))
-	sh.Chrome = &core.Chrome{Header: core.NewHeaderPane(Header), Output: pane, Status: components.NewStatusLine()}
+	header := core.NewHeaderPane(Header)
+	header.OnClick = func(sh *core.Shared, _, _ int) core.Action { return rootGitAction(sh) }
+	sh.Chrome = &core.Chrome{Header: header, Output: pane, Status: components.NewStatusLine()}
 	return core.NewRouter(sh, []core.TabEntry{
 		{Title: "Repos", New: func(sh *core.Shared) core.Screen { return NewReposScreen(sh) }},
 	}), pane
@@ -267,6 +269,23 @@ func TestRootGitKeyNotACheckout(t *testing.T) {
 	}
 	if out := tm.View(); !strings.Contains(out, "not a git checkout") {
 		t.Errorf("the status line should explain why nothing opened:\n%s", out)
+	}
+}
+
+// TestHeaderClickOpensRootGit: a click on the header fires the OnClick Run wires — the same
+// root-git action as ctrl+v — opening the scanned root's own git menu.
+func TestHeaderClickOpensRootGit(t *testing.T) {
+	base := twoRepoTree(t)
+	checkoutBase(t, base)
+
+	tm := sized(router(base))
+	tm = pump(tm, tea.MouseMsg{X: 5, Y: 0, Button: tea.MouseButtonLeft, Action: tea.MouseActionPress})
+
+	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
+		t.Fatalf("a header click should open the root's Git menu (PickerScreen), got %T", tm.(core.Router).Top())
+	}
+	if out := tm.View(); !strings.Contains(out, "⟳ Fetch") || !strings.Contains(out, "Commit") {
+		t.Errorf("a header click should open the root's Git menu with the per-repo ops:\n%s", out)
 	}
 }
 

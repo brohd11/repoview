@@ -32,6 +32,13 @@ The git menus stream their output into a pane below the list:
 - `w` — wrap its long lines instead of clipping them
 - `C` — clear it
 
+## The mouse
+
+- click the header — the scanned root's own git menu (same as `ctrl+v`)
+- click a breadcrumb segment — jump back to that screen
+- the wheel scrolls the log pane (and focuses it); click the list to hand the keys back
+- `m` — turn mouse capture off, restoring the terminal's own text selection
+
 ## Help
 
 - `?` — expand the help bar to show every key for the current screen

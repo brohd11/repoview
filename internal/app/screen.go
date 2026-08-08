@@ -60,11 +60,7 @@ func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Ac
 		// "ctrl+v" opens the root's own git menu — the same RepoMenu a nested repo's row opens,
 		// handed the base itself. "V" puts the root in the batch; ctrl+v works it on its own.
 		case core.MatchKey(k.String(), keys.RootGit):
-			c := Of(sh)
-			if c.RootRepo == nil {
-				return s, core.SetStatus("base directory is not a git checkout")
-			}
-			return s, core.Push(repoui.RepoMenu(sh, *c.RootRepo, c.RootRepo.Name))
+			return s, rootGitAction(sh)
 		// "f" fetches every repo concurrently so the ahead/behind markers can see new upstream
 		// commits. Network-bound, hence explicit.
 		case core.MatchKey(k.String(), keys.Fetch):
@@ -91,6 +87,16 @@ func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Ac
 		}
 	}
 	return s, components.RootUpdate(sh, &s.list, msg)
+}
+
+// rootGitAction opens the scanned root's own git menu — the ctrl+v key and a header
+// click both resolve to it. A non-checkout base only reports on the status line.
+func rootGitAction(sh *core.Shared) core.Action {
+	c := Of(sh)
+	if c.RootRepo == nil {
+		return core.SetStatus("base directory is not a git checkout")
+	}
+	return core.Push(repoui.RepoMenu(sh, *c.RootRepo, c.RootRepo.Name))
 }
 
 // Receive rebuilds the list from a fresh scan on repoview's own RescanMsg (the Refresh

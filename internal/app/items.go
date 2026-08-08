@@ -94,13 +94,13 @@ func repoRow(r repo.Repo) components.Item {
 	return components.Item{
 		Name: r.Name + repo.StatusMarker(r),
 		Desc: repoDesc(r),
-		Pick: func(sh *core.Shared) core.Action { return core.Push(repoui.RepoMenu(sh, r)) },
+		Pick: func(sh *core.Shared) core.Action { return core.Push(repoui.RepoMenu(sh, r, r.Name)) },
 		Keys: func(sh *core.Shared, k string) (core.Action, bool) {
 			switch {
 			case core.MatchKey(k, keys.Git):
-				return core.Push(repoui.RepoMenu(sh, r)), true
+				return core.Push(repoui.RepoMenu(sh, r, r.Name)), true
 			case core.MatchKey(k, keys.Diff):
-				return repoui.DiffAction(sh, r), true
+				return repoui.DiffAction(sh, r, r.Name), true
 			case core.MatchKey(k, keys.Terminal):
 				return sysopen.Terminal(r.Dir), true
 			case core.MatchKey(k, keys.OpenDir):

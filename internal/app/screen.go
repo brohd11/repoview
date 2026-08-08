@@ -64,7 +64,7 @@ func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Ac
 			if c.RootRepo == nil {
 				return s, core.SetStatus("base directory is not a git checkout")
 			}
-			return s, core.Push(repoui.RepoMenu(sh, *c.RootRepo))
+			return s, core.Push(repoui.RepoMenu(sh, *c.RootRepo, c.RootRepo.Name))
 		// "f" fetches every repo concurrently so the ahead/behind markers can see new upstream
 		// commits. Network-bound, hence explicit.
 		case core.MatchKey(k.String(), keys.Fetch):

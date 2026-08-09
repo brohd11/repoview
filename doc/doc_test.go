@@ -1,4 +1,4 @@
-package docs
+package doc
 
 import (
 	"strings"
@@ -13,7 +13,7 @@ import (
 // markdown itself, so a page that forgets its "# " heading would silently show up in the
 // menu as a blank row. Assert the convention holds for every page that ships.
 func TestPagesParse(t *testing.T) {
-	pages := components.ParseDocPages(pagesFS, "pages")
+	pages := Pages()
 	if len(pages) == 0 {
 		t.Fatal("no pages embedded")
 	}
@@ -33,9 +33,8 @@ func TestPagesParse(t *testing.T) {
 // The renderer folds to the width DocScreen hands it; a row wider than that would be
 // clipped at the pane edge with no way to scroll to it.
 func TestRenderFitsWidth(t *testing.T) {
-	pages := components.ParseDocPages(pagesFS, "pages")
 	for _, width := range []int{40, 80} {
-		for _, p := range pages {
+		for _, p := range Pages() {
 			for i, line := range strings.Split(components.RenderMarkdown(p.Body, width), "\n") {
 				if w := ansi.StringWidth(line); w > width {
 					t.Errorf("page %q at width %d: line %d is %d cols wide: %q", p.Title, width, i+1, w, line)

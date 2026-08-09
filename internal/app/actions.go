@@ -7,16 +7,12 @@ import (
 	"github.com/brohd11/bubblestack/core"
 )
 
-// actionsMenu is the small Actions picker opened with "a". The menu itself is the shared
-// bubblestack one (theme, self-update, refresh); repoview's only addition is the Docs row.
+// actionsMenu is the small Actions picker opened with "a" — the shared bubblestack
+// menu (theme, docs, self-update, refresh); repoview only supplies its pages and its
+// Refresh row (the rescan the global Refresh key fires).
 func actionsMenu(sh *core.Shared) *components.PickerScreen {
-	docsRow := components.Item{
-		Name: "? Docs",
-		Desc: "getting started, controls, git menu",
-		Pick: func(sh *core.Shared) core.Action { return core.Push(docs.Index()) },
-	}
 	return components.NewActionsMenu(selfUpdateHooks(Of(sh).Version),
-		"rescan the directory and refresh git state", refreshAction, docsRow)
+		"rescan the directory and refresh git state", refreshAction, docs.Pages())
 }
 
 // refreshAction rescans and rebuilds the list — the action both the Actions ▸ Refresh row and

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -62,7 +63,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	}
 	abs, err := filepath.Abs(root)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not resolve absolute path for %s: %w", root, err)
 	}
 	return app.Run(abs, depth, version)
 }

@@ -33,11 +33,11 @@ func Of(sh *core.Shared) *Ctx { return core.App[Ctx](sh) }
 
 // Scan re-reads every git checkout under Root — branch, upstream divergence, and dirty state
 // per repo (all local reads). A scan error leaves the previous list intact rather than blanking
-// the screen.
-func (c *Ctx) Scan() {
+// the screen; the error is returned so a caller with a status line can surface it.
+func (c *Ctx) Scan() error {
 	repos, err := repo.Scan(c.Root, c.Depth)
 	if err != nil {
-		return // leave the previous list intact
+		return err // leave the previous list intact
 	}
 	c.Repos = repos
 	// Scan omits the base itself; describe it separately so the header can show its status and
@@ -46,7 +46,12 @@ func (c *Ctx) Scan() {
 	if root, ok := repo.DescribeRoot(c.Root); ok {
 		c.RootRepo = &root
 	}
+	return nil
 }
+
+// HasAny reports whether the last scan found anything a git op can act on — a nested repo
+// or the root checkout itself.
+func (c *Ctx) HasAny() bool { return len(c.Repos) > 0 || c.RootRepo != nil }
 
 // RescanMsg is repoview's "reload yourself" broadcast: the repo list re-scans from disk on it.
 // The Refresh action and the global Refresh key ('r') raise it; the shared git flows raise

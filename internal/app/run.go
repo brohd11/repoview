@@ -20,7 +20,7 @@ func Run(root string, depth int, version string) error {
 		// A header click opens the root's own git menu, same as ctrl+v.
 		HeaderClick: func(sh *core.Shared, _, _ int) core.Action { return rootGitAction(sh) },
 		Output:      components.NewLogPane(),
-		Status: components.NewStatusLine(),
+		Status:      components.NewStatusLine(),
 		// Theme left unset — bubblestack.Run applies the shared ~/.bubblestack theme.
 		Tabs: []bubblestack.TabEntry{
 			{Title: "Repos", New: func(sh *core.Shared) core.Screen { return NewReposScreen(sh) }},

@@ -52,7 +52,7 @@ func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Ac
 		// to act on — nested repos or the base itself — and hands the menu a RootOption so the
 		// base can be toggled into the batch's targets.
 		case core.MatchKey(k.String(), keys.GitAll):
-			if c := Of(sh); len(c.Repos) == 0 && c.RootRepo == nil {
+			if c := Of(sh); !c.HasAny() {
 				return s, core.SetStatus("no repos to act on")
 			}
 			return s, core.Push(repoui.AllReposMenu(sh, allScope(),
@@ -67,7 +67,7 @@ func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Ac
 			if s.fetching {
 				return s, core.SetStatus("fetch already running")
 			}
-			if c := Of(sh); len(c.Repos) == 0 && c.RootRepo == nil {
+			if c := Of(sh); !c.HasAny() {
 				return s, core.SetStatus("no repos to fetch")
 			}
 			s.fetching = true
@@ -106,14 +106,25 @@ func rootGitAction(sh *core.Shared) core.Action {
 func (s *ReposScreen) Receive(sh *core.Shared, payload any) core.Action {
 	switch p := payload.(type) {
 	case repoui.RefreshMsg, RescanMsg:
-		Of(sh).Scan()
-		s.list.SetItems(repoListItems(sh, s.sort))
+		return s.rescan(sh)
 	case repoui.FetchDoneMsg:
 		s.fetching = false
-		Of(sh).Scan()
-		s.list.SetItems(repoListItems(sh, s.sort))
-		return repoui.LogFetchResults(sh, p.Results, "repo(s)", "no repos fetched")
+		return core.Seq(
+			s.rescan(sh),
+			repoui.LogFetchResults(sh, p.Results, "repo(s)", "no repos fetched"),
+		)
 	}
+	return core.Action{}
+}
+
+// rescan re-reads the tree and rebuilds the list from it. A scan failure keeps the old list
+// (Ctx.Scan leaves it intact) and says so on the status line, rather than letting the stale
+// list look current.
+func (s *ReposScreen) rescan(sh *core.Shared) core.Action {
+	if err := Of(sh).Scan(); err != nil {
+		return core.StatusErr(err)
+	}
+	s.list.SetItems(repoListItems(sh, s.sort))
 	return core.Action{}
 }
 

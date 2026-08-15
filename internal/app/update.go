@@ -36,13 +36,6 @@ func selfUpdateHooks(version string) components.SelfUpdateHooks {
 	}
 }
 
-// newSelfUpdateLoading is the entry point of the Actions ▸ Update repoview flow:
-// loading → confirm → task. The flow itself is shared (bubblestack/components);
-// repoview only injects its hooks.
-func newSelfUpdateLoading(sh *core.Shared) *components.LoadingScreen {
-	return components.NewSelfUpdateLoading(selfUpdateHooks(Of(sh).Version))
-}
-
 // SelfUpdateCheckCmd is the app-level startup command (wired onto bubblestack Config.Init):
 // it checks repoview's own repo for a newer release off the UI thread and, only when an
 // update is available, writes an "update available" line to the shared status line and log.

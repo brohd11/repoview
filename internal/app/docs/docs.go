@@ -13,8 +13,3 @@ import (
 
 // Pages returns the embedded manual pages in filename order (see repoview/doc).
 func Pages() []components.DocPage { return doc.Pages() }
-
-// Index is the docs menu: one self-dispatching row per page, each pushing its own reader.
-func Index() *components.PickerScreen {
-	return components.DocsIndex("Docs", "Docs", Pages())
-}

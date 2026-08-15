@@ -69,7 +69,7 @@ func runRepos(cmd *cobra.Command, args []string) error {
 	}
 	base, err := filepath.Abs(base)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not resolve absolute path for %s: %w", base, err)
 	}
 
 	repos, err := repo.FindGitRepos(base, reposDepth)
@@ -108,7 +108,7 @@ func runRepos(cmd *cobra.Command, args []string) error {
 	for _, rel := range repos {
 		full := filepath.Join(base, rel)
 		display := filepath.Join(prefix, rel)
-		c := exec.Command("sh", "-c", cmdStr)
+		c := exec.CommandContext(cmd.Context(), "sh", "-c", cmdStr)
 		c.Dir = full
 
 		if reposRaw {

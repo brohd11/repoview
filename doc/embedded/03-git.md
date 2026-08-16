@@ -6,6 +6,8 @@ each streaming git's own output to the log pane.
 ## Per-repo
 
 - `status` — `git status`, so you can see what's changed before acting
+- `log` — the commit history, one commit per line with branches and tags colored; `m`
+  expands it to git's full form (author, date, the whole message)
 - `fetch` — update the remote-tracking refs, refreshing the ahead/behind counts
 - `pull` — `--ff-only`, so a branch that has diverged aborts having changed nothing rather
   than dropping you into a merge conflict inside a TUI

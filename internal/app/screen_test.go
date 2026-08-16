@@ -70,8 +70,11 @@ func routerWithPane(root string) (core.Router, *components.LogPane) {
 	}), pane
 }
 
+// sized gives the model a terminal. The height is enough to show the per-repo Git menu
+// whole — several tests assert on rows near its end (Commit, the one DiffAction seeds the
+// menu for), and a shorter terminal paginates the list and drops them off the page.
 func sized(tm tea.Model) tea.Model {
-	tm, _ = tm.Update(tea.WindowSizeMsg{Width: 90, Height: 30})
+	tm, _ = tm.Update(tea.WindowSizeMsg{Width: 90, Height: 40})
 	return tm
 }
 

@@ -38,7 +38,7 @@ func NewReposScreen(sh *core.Shared) *ReposScreen {
 
 func (s *ReposScreen) Init(*core.Shared) tea.Cmd        { return nil }
 func (s *ReposScreen) Filtering() bool                  { return s.list.FilterState() == list.Filtering }
-func (s *ReposScreen) View(*core.Shared) string         { return s.list.View() }
+func (s *ReposScreen) View(*core.Shared) string         { return core.RenderList(s.list) }
 func (s *ReposScreen) HelpView(*core.Shared) string     { return core.ShortHelp(s.list, core.HelpTabbed) }
 func (s *ReposScreen) SetSize(_ *core.Shared, w, h int) { s.list.SetSize(w, h) }
 func (s *ReposScreen) CrumbLabel(bool) string           { return "Repos" }

@@ -35,52 +35,26 @@ repoview repos -C /path --depth 3 -- pwd
 Flags: `-C/--dir` (scan root, default cwd), `--raw` (stream vs the default capture), `--dirty`,
 `--depth` (default 1).
 
-### `update` subcommand
-
-Self-update: compare this binary's version against the latest GitHub release and, when a newer
-one exists, download and install it over the running binary (same `install.sh` as the curl
-install below, pointed at this binary's directory):
-
-```
-repoview update           # install the update when one is available
-repoview update --check   # only report current/latest and whether an update exists
-```
-
-`dev` builds (a plain `go build`, not stamped by the makefile) are never offered an update.
-The TUI surfaces the same flow: an "update available" note on the status line at startup, and
-**a** → **Update repoview** in the Actions menu.
-
 ## Install
 
+Unix:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brohd11/repoview/main/install.sh | sh
 ```
 
-Installs into `~/.local/bin`, and offers to add that to your `PATH` if it isn't already.
-Prefer to read before you pipe to a shell? Same thing in two steps:
+Windows:
 
-```bash
-curl -fsSL -o install.sh https://raw.githubusercontent.com/brohd11/repoview/main/install.sh
-less install.sh && sh install.sh
+```powershell
+irm https://raw.githubusercontent.com/brohd11/repoview/main/install.ps1 | iex
 ```
 
-Overrides: `BIN_DIR=/usr/local/bin` to install elsewhere, `VERSION=v0.1.1` to pin a release,
-`--modify-path` to update your shell rc file without prompting (for unattended setup scripts), or
-`--no-modify-path` to leave rc files alone.
-
-Covers macOS (arm64/amd64) and Linux (amd64/arm64). On **Windows**, grab the `.zip` from the
-[Releases](https://github.com/brohd11/repoview/releases) page.
-
-With a Go toolchain:
-
-```bash
-go install github.com/brohd11/repoview@latest
+To update:
 ```
+repoview update
+```
+
+More install details (location, flags, etc): [shared install reference](https://github.com/brohd11/goutil/blob/main/docs/install.md).
 
 <sub>macOS note: a binary downloaded **in a browser** gets quarantined by Gatekeeper — clear it
-with `xattr -dr com.apple.quarantine path/to/repoview`. This doesn't apply to the installer
+with `xattr -dr com.apple.quarantine path/to/binary`. This doesn't apply to the installer
 above; the attribute is set by browsers, not by `curl`.</sub>
-
-Built on [bubblestack](https://github.com/brohd11/bubblestack) (TUI framework) and
-[gitstack](https://github.com/brohd11/gitstack) (git engine + screens); it's the manifest-free
-sibling of the Godot addon manager [gdaddon](https://github.com/brohd11/gdaddon).

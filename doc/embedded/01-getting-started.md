@@ -23,6 +23,9 @@ repoview 4          # current dir, depth 4
 repoview /path 3    # /path, depth 3
 ```
 
+Set `REPOVIEW_DEPTH` in your shell to pick that starting depth once instead of typing it
+every run; a depth given as an argument or with `--depth` still wins.
+
 Positional args are order-free: an all-digits argument is the depth, anything else is the
 directory. The header shows the scanned root and how many checkouts it found. When the root
 itself is a git checkout, its own status rides the header's `Root:` line.

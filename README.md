@@ -12,6 +12,12 @@ repoview [dir] [depth]   # TUI; dir defaults to the current directory, depth to 
   -d, --depth N          # depth can also be given as a flag (default 1)
 ```
 
+Set `REPOVIEW_DEPTH` to the depth you always want and both the TUI and `repos` start there
+instead of 1 — `export REPOVIEW_DEPTH=2` in your shell profile, and `repoview` scans two
+levels without a number every time. Anything typed still wins: a positional depth beats
+`--depth`, which beats the variable. A malformed or negative value is refused rather than
+quietly ignored, and a blank one (`REPOVIEW_DEPTH= repoview`) drops it for a single run.
+
 Keys: **enter** (or **v**) opens the highlighted repo's git menu (status/fetch/pull/push/commit),
 **t** opens a terminal at that repo's directory, **V** the all-repos batch menu (fetch/pull/push
 everything), **f** a concurrent fetch-all, **a** the Actions menu (theme, self-update, refresh), **r** refresh
@@ -33,7 +39,7 @@ repoview repos -C /path --depth 3 -- pwd
 ```
 
 Flags: `-C/--dir` (scan root, default cwd), `--raw` (stream vs the default capture), `--dirty`,
-`--depth` (default 1).
+`--depth` (default `$REPOVIEW_DEPTH`, else 1).
 
 ## Install
 

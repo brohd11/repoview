@@ -52,6 +52,7 @@ func init() {
 	reposCmd.Flags().BoolVar(&reposDirty, "dirty", false, "only repos with uncommitted changes")
 	reposCmd.Flags().IntVar(&reposDepth, "depth", 1, "max directory depth to search")
 	reposCmd.Flags().BoolVar(&reposIncludeRoot, "include-root", false, "also run in the top-level repo (the scanned dir itself)")
+	reposCmd.Flags().Lookup("depth").DefValue = "$REPOVIEW_DEPTH, else 1" // see root.go
 	rootCmd.AddCommand(reposCmd)
 }
 
@@ -72,7 +73,11 @@ func runRepos(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not resolve absolute path for %s: %w", base, err)
 	}
 
-	repos, err := repo.FindGitRepos(base, reposDepth)
+	depth, err := resolveDepth(reposDepth, cmd.Flags().Changed("depth"))
+	if err != nil {
+		return err
+	}
+	repos, err := repo.FindGitRepos(base, depth)
 	if err != nil {
 		return err
 	}

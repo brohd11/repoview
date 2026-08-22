@@ -32,7 +32,7 @@ var _ core.Crumber = (*ReposScreen)(nil)
 
 func NewReposScreen(sh *core.Shared) *ReposScreen {
 	l := core.NewSelectList(repoListItems(sh, components.SortAlpha), components.SortTitle(listTitle, components.SortAlpha),
-		keys.Git, keys.Diff, keys.Terminal, keys.OpenDir, keys.Fetch, keys.GitAll, keys.RootGit, keys.Actions, keys.Sort)
+		keys.Git, keys.Diff, keys.Terminal, keys.TerminalWindow, keys.OpenDir, keys.Fetch, keys.GitAll, keys.RootGit, keys.Actions, keys.Sort)
 	return &ReposScreen{list: l}
 }
 

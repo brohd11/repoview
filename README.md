@@ -19,7 +19,8 @@ levels without a number every time. Anything typed still wins: a positional dept
 quietly ignored, and a blank one (`REPOVIEW_DEPTH= repoview`) drops it for a single run.
 
 Keys: **enter** (or **v**) opens the highlighted repo's git menu (status/fetch/pull/push/commit),
-**t** opens a terminal at that repo's directory, **V** the all-repos batch menu (fetch/pull/push
+**t** hands this window to a shell at that repo's directory (**T** for a new window,
+**ctrl+t** for the file manager), **V** the all-repos batch menu (fetch/pull/push
 everything), **f** a concurrent fetch-all, **a** the Actions menu (theme, self-update, refresh), **r** refresh
 (rescan). It is deliberately not a full git client — `pull` is fast-forward-only and anything
 needing a decision fails cleanly and sends you to a terminal.

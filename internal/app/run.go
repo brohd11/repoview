@@ -25,9 +25,10 @@ func Run(root string, depth int, version string) error {
 		Tabs: []bubblestack.TabEntry{
 			{Title: "Repos", New: func(sh *core.Shared) core.Screen { return NewReposScreen(sh) }},
 		},
-		Init:           SelfUpdateCheckCmd,
-		RefreshAction:  func(sh *core.Shared) core.Action { return refreshAction(sh) },
-		TerminalAction: func(dir string) core.Action { return sysopen.Terminal(dir) },
-		OpenDirAction:  func(dir string) core.Action { return sysopen.Path(dir, false) },
+		Init:                 SelfUpdateCheckCmd,
+		RefreshAction:        func(sh *core.Shared) core.Action { return refreshAction(sh) },
+		TerminalAction:       func(dir string) core.Action { return sysopen.TerminalInline(dir) },
+		TerminalWindowAction: func(dir string) core.Action { return sysopen.Terminal(dir) },
+		OpenDirAction:        func(dir string) core.Action { return sysopen.Path(dir, false) },
 	})
 }

@@ -16,7 +16,8 @@ each streaming git's own output to the log pane.
 
 It's not a git client and doesn't try to be — an operation that needs a decision from you
 refuses instead of guessing. When something fails, git says why in the log, and you go sort
-it out in a terminal (`t` opens one at the repo's directory).
+it out in a terminal (`t` hands this window to a shell at the repo's directory; `exit`
+brings repoview back).
 
 ## Commit staging
 

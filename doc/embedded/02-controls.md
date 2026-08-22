@@ -6,8 +6,10 @@ Every key repoview responds to, grouped by what it acts on.
 
 - `enter` / `v` — open the highlighted repo's git menu (status, fetch, pull, push, commit)
 - `d` — open the highlighted repo's diff, skipping the menu
-- `t` — open an OS terminal at the repo's directory
-- `T` — open the repo's directory in the OS file manager
+- `t` — open a terminal at the repo's directory **in this window**: repoview steps aside,
+  your shell takes over, and the list comes back when you `exit`
+- `T` — open a terminal at the repo's directory in a **new window**, leaving repoview up
+- `ctrl+t` — open the repo's directory in the OS file manager
 - `f` — fetch every repo concurrently, refreshing the ahead/behind markers
 - `V` — the all-repos git menu: fetch, pull, or push across every repo at once
 - `ctrl+v` — the scanned root's own git menu (when the base directory is itself a checkout)
@@ -43,5 +45,6 @@ The git menus stream their output into a pane below the list:
 
 - `?` — expand the help bar to show every key for the current screen
 
-Row keys (`v`, `d`, `t`, `T`) act on the highlighted repo; `V`, `f`, `s`, `a` act on the
-list as a whole. The scheme matches gdaddon, its sibling tool.
+Row keys (`v`, `d`, `t`, `T`, `ctrl+t`) act on the highlighted repo; `V`, `f`, `s`, `a` act
+on the list as a whole. `t`/`T`/`ctrl+t` also work from inside a repo's git menu or diff, on
+whatever directory that screen is showing. The scheme matches gdaddon, its sibling tool.

@@ -89,7 +89,7 @@ func repoRank(r repo.Repo) int {
 // name, its branch as the description, enter → the shared per-repo git submenu, and the row's own
 // shortcuts (dispatched for the highlighted row by RootUpdate) — "v" the git submenu (an alias of
 // enter), "d" that repo's diff list (repoui.DiffAction, seeded beneath the git submenu), and
-// "t" a terminal at the repo's directory.
+// "t" a terminal at the repo's directory (in this process; "T" for a window).
 func repoRow(r repo.Repo) components.Item {
 	return components.Item{
 		Name: r.Name + repo.StatusMarker(r),
@@ -102,6 +102,8 @@ func repoRow(r repo.Repo) components.Item {
 			case core.MatchKey(k, keys.Diff):
 				return repoui.DiffAction(sh, r, r.Name), true
 			case core.MatchKey(k, keys.Terminal):
+				return sysopen.TerminalInline(r.Dir), true
+			case core.MatchKey(k, keys.TerminalWindow):
 				return sysopen.Terminal(r.Dir), true
 			case core.MatchKey(k, keys.OpenDir):
 				return sysopen.Path(r.Dir, false), true

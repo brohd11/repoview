@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
+	"github.com/brohd11/goutil/envopt"
 	"github.com/brohd11/repoview/internal/app"
 
 	"github.com/spf13/cobra"
@@ -25,34 +25,12 @@ var rootDepth int
 const depthEnv = "REPOVIEW_DEPTH"
 
 // resolveDepth picks the depth to scan with: the flag when it was actually typed,
-// otherwise $REPOVIEW_DEPTH, otherwise the flag's own default. Everything typed still
-// outranks the environment, and a positional integer outranks the flag in runRoot, so
-// the ladder reads argument, flag, environment, default.
-//
-// A malformed or negative value is refused rather than ignored: the variable lives in a
-// shell profile, where a silently misread depth would never be noticed. An unset or
-// blank one is not malformed, which is what makes `REPOVIEW_DEPTH= repoview` the way to
-// drop it for a single run.
+// otherwise REPOVIEW_DEPTH, otherwise the flag's own default. The ladder itself is
+// goutil/envopt.Int -- gote had written the identical function for GOTE_DEPTH, down to
+// the doc comment and the test table. repoview does not need envopt's `set` return.
 func resolveDepth(flagDepth int, flagChanged bool) (int, error) {
-	if flagChanged {
-		return flagDepth, nil
-	}
-	raw, ok := os.LookupEnv(depthEnv)
-	if !ok {
-		return flagDepth, nil
-	}
-	trimmed := strings.TrimSpace(raw)
-	if trimmed == "" {
-		return flagDepth, nil
-	}
-	n, err := strconv.Atoi(trimmed)
-	if err != nil {
-		return flagDepth, fmt.Errorf("%s %q is not a number", depthEnv, raw)
-	}
-	if n < 0 {
-		return flagDepth, fmt.Errorf("%s %d is negative", depthEnv, n)
-	}
-	return n, nil
+	depth, _, err := envopt.Int(depthEnv, flagDepth, flagChanged)
+	return depth, err
 }
 
 var rootCmd = &cobra.Command{

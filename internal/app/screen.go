@@ -6,8 +6,8 @@ import (
 	"github.com/brohd11/gitstack/repo"
 	"github.com/brohd11/gitstack/repoui"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 )
 
 const listTitle = "Repos"
@@ -45,7 +45,7 @@ func (s *ReposScreen) CrumbLabel(bool) string           { return "Repos" }
 
 func (s *ReposScreen) Update(sh *core.Shared, msg tea.Msg) (core.Screen, core.Action) {
 	// The tab's own keys, gated behind the filter guard so they don't hijack filter typing.
-	if k, ok := msg.(tea.KeyMsg); ok && !s.Filtering() {
+	if k, ok := msg.(tea.KeyPressMsg); ok && !s.Filtering() {
 		switch {
 		// "V" opens the all-repos git page (fetch/pull/push across every scanned repo). The
 		// per-repo page is enter on a row (the row's own Pick). It fires when there's anything

@@ -1,6 +1,6 @@
 package app
 
-import "github.com/charmbracelet/bubbles/key"
+import "charm.land/bubbles/v2/key"
 
 // keys are repoview's screen-level bindings that aren't part of bubblestack's framework keymap
 // (core.Keys). Enter — open the highlighted repo's git menu — is the list's own select key, so

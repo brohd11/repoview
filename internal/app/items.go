@@ -10,7 +10,7 @@ import (
 	"github.com/brohd11/gitstack/repo"
 	"github.com/brohd11/gitstack/repoui"
 
-	"github.com/charmbracelet/bubbles/list"
+	"charm.land/bubbles/v2/list"
 )
 
 // repoSortModes is the repo list's sort cycle: A→Z, Z→A, then status (attention-worthy

@@ -11,7 +11,7 @@ import (
 	"github.com/brohd11/bubblestack/core"
 	"github.com/brohd11/gitstack/repoui"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // twoRepoTree builds a directory with two real git checkouts under it: "alpha" (clean, on
@@ -105,57 +105,57 @@ func TestReposScreenWiring(t *testing.T) {
 		t.Fatalf("want the Repos screen on top, got %T", tm.(core.Router).Top())
 	}
 	// The list shows both repos, and the dirty one carries the marker.
-	if out := tm.View(); !strings.Contains(out, "alpha") || !strings.Contains(out, "beta") ||
+	if out := view(tm); !strings.Contains(out, "alpha") || !strings.Contains(out, "beta") ||
 		!strings.Contains(out, "uncommitted changes") {
 		t.Errorf("repo list should show both repos and beta's dirty marker:\n%s", out)
 	}
 
 	// enter on the highlighted row (alpha, first in the sorted scan) opens its git submenu.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter})
+	tm = pump(tm, keyMsg("enter"))
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("enter should open the per-repo Git submenu (PickerScreen), got %T", tm.(core.Router).Top())
 	}
-	if out := tm.View(); !strings.Contains(out, "alpha") || !strings.Contains(out, "Pull") {
+	if out := view(tm); !strings.Contains(out, "alpha") || !strings.Contains(out, "Pull") {
 		t.Errorf("submenu should be the repo's Git menu:\n%s", out)
 	}
 
 	// esc back, then "v" (the row-level alias, dispatched via Item.Keys) opens the same submenu.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'v'}})
+	tm = pump(tm, keyMsg("esc"))
+	tm = pump(tm, keyMsg("v"))
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("v should open the per-repo Git submenu, got %T", tm.(core.Router).Top())
 	}
-	if out := tm.View(); !strings.Contains(out, "Pull") {
+	if out := view(tm); !strings.Contains(out, "Pull") {
 		t.Errorf("v submenu should be the repo's Git menu:\n%s", out)
 	}
 
 	// esc back, then V opens the all-repos menu.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'V'}})
+	tm = pump(tm, keyMsg("esc"))
+	tm = pump(tm, keyMsg("V"))
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("V should open the all-repos Git menu, got %T", tm.(core.Router).Top())
 	}
-	if out := tm.View(); !strings.Contains(out, "all repos") {
+	if out := view(tm); !strings.Contains(out, "all repos") {
 		t.Errorf("all-repos menu title should say so:\n%s", out)
 	}
 
 	// esc back, then a opens the Actions menu with Theme + Refresh.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	tm = pump(tm, keyMsg("esc"))
+	tm = pump(tm, keyMsg("a"))
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("a should open the Actions menu, got %T", tm.(core.Router).Top())
 	}
-	if out := tm.View(); !strings.Contains(out, "Theme") || !strings.Contains(out, "Refresh") {
+	if out := view(tm); !strings.Contains(out, "Theme") || !strings.Contains(out, "Refresh") {
 		t.Errorf("Actions menu should list Theme and Refresh:\n%s", out)
 	}
 
 	// esc back to the root; a git flow's RefreshMsg must rebuild the list without panicking.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
+	tm = pump(tm, keyMsg("esc"))
 	tm = pump(tm, core.PropagateAll(RescanMsg{}))
 	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
 		t.Fatalf("after refresh, want the Repos screen on top, got %T", tm.(core.Router).Top())
 	}
-	if out := tm.View(); !strings.Contains(out, "alpha") {
+	if out := view(tm); !strings.Contains(out, "alpha") {
 		t.Errorf("rebuilt list should still show the repos:\n%s", out)
 	}
 }
@@ -182,7 +182,7 @@ func TestRootStatusInHeader(t *testing.T) {
 
 	// The header's Root: line carries the dirty marker.
 	found := false
-	for _, line := range strings.Split(tm.View(), "\n") {
+	for _, line := range strings.Split(view(tm), "\n") {
 		if strings.Contains(line, "Root:") {
 			if !strings.Contains(line, "⚠ [uncommitted changes]") {
 				t.Errorf("the Root: line should carry the root repo's dirty marker:\n%s", line)
@@ -191,15 +191,15 @@ func TestRootStatusInHeader(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Fatalf("no Root: line in the rendered view:\n%s", tm.View())
+		t.Fatalf("no Root: line in the rendered view:\n%s", view(tm))
 	}
 
 	// The root is not a list row: nothing renders the ⌂ marker anywhere.
-	if out := tm.View(); strings.Contains(out, "⌂") {
+	if out := view(tm); strings.Contains(out, "⌂") {
 		t.Errorf("the root repo must not appear as a list row:\n%s", out)
 	}
 	// And the list is the nested checkouts only.
-	if out := tm.View(); !strings.Contains(out, "alpha") || !strings.Contains(out, "beta") {
+	if out := view(tm); !strings.Contains(out, "alpha") || !strings.Contains(out, "beta") {
 		t.Errorf("the list should still show the nested repos:\n%s", out)
 	}
 }
@@ -214,24 +214,24 @@ func TestAllReposIncludeRoot(t *testing.T) {
 	tm := sized(router(base))
 
 	// V opens the all-repos menu, with the include-root toggle off by default.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'V'}})
-	if out := tm.View(); !strings.Contains(out, "⌂ Include root: off") {
+	tm = pump(tm, keyMsg("V"))
+	if out := view(tm); !strings.Contains(out, "⌂ Include root: off") {
 		t.Fatalf("the all-repos menu should offer the include-root toggle:\n%s", out)
 	}
 
 	// Down to the toggle row (below Fetch/Pull/Push all) and enter to switch it on.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter})
-	if out := tm.View(); !strings.Contains(out, "⌂ Include root: on") {
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("enter"))
+	if out := view(tm); !strings.Contains(out, "⌂ Include root: on") {
 		t.Fatalf("enter on the toggle row should switch it on:\n%s", out)
 	}
 
 	// Back to the top row (Fetch all) and into its confirm: the root joins the targets (2 + 1 = 3).
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'g'}})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter})
-	if out := tm.View(); !strings.Contains(out, "Fetch 3 repo(s)") {
+	tm = pump(tm, keyMsg("g"))
+	tm = pump(tm, keyMsg("enter"))
+	if out := view(tm); !strings.Contains(out, "Fetch 3 repo(s)") {
 		t.Errorf("with the root included, the fetch confirm should target 3 repos:\n%s", out)
 	}
 }
@@ -244,16 +244,16 @@ func TestRootGitKey(t *testing.T) {
 	checkoutBase(t, base)
 
 	tm := sized(router(base))
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyCtrlV})
+	tm = pump(tm, keyMsg("ctrl+v"))
 
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("ctrl+v should open the root's Git menu (PickerScreen), got %T", tm.(core.Router).Top())
 	}
-	if out := tm.View(); !strings.Contains(out, "⟳ Fetch") || !strings.Contains(out, "Commit") {
+	if out := view(tm); !strings.Contains(out, "⟳ Fetch") || !strings.Contains(out, "Commit") {
 		t.Errorf("the root's Git menu should offer the per-repo ops:\n%s", out)
 	}
 	// esc returns to the list.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
+	tm = pump(tm, keyMsg("esc"))
 	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
 		t.Fatalf("esc should return to the repo list, got %T", tm.(core.Router).Top())
 	}
@@ -265,12 +265,12 @@ func TestRootGitKeyNotACheckout(t *testing.T) {
 	tm := sized(router(twoRepoTree(t))) // base is not a checkout
 	// No pump: the status auto-clear rides the returned cmd's timer, which a pump would run
 	// synchronously and wipe the line before the assert.
-	tm, _ = tm.Update(tea.KeyMsg{Type: tea.KeyCtrlV})
+	tm, _ = tm.Update(keyMsg("ctrl+v"))
 
 	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
 		t.Fatalf("ctrl+v on a non-checkout base should not navigate, got %T", tm.(core.Router).Top())
 	}
-	if out := tm.View(); !strings.Contains(out, "not a git checkout") {
+	if out := view(tm); !strings.Contains(out, "not a git checkout") {
 		t.Errorf("the status line should explain why nothing opened:\n%s", out)
 	}
 }
@@ -282,12 +282,12 @@ func TestHeaderClickOpensRootGit(t *testing.T) {
 	checkoutBase(t, base)
 
 	tm := sized(router(base))
-	tm = pump(tm, tea.MouseMsg{X: 5, Y: 0, Button: tea.MouseButtonLeft, Action: tea.MouseActionPress})
+	tm = pump(tm, tea.MouseClickMsg{X: 5, Y: 0, Button: tea.MouseLeft})
 
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("a header click should open the root's Git menu (PickerScreen), got %T", tm.(core.Router).Top())
 	}
-	if out := tm.View(); !strings.Contains(out, "⟳ Fetch") || !strings.Contains(out, "Commit") {
+	if out := view(tm); !strings.Contains(out, "⟳ Fetch") || !strings.Contains(out, "Commit") {
 		t.Errorf("a header click should open the root's Git menu with the per-repo ops:\n%s", out)
 	}
 }
@@ -313,13 +313,13 @@ func TestDiffKeyOnRepoRow(t *testing.T) {
 	tm := sized(router(dirtyRepoTree(t)))
 
 	// down to beta (the dirty one; alpha sorts first), then d.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("d"))
 
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("d should open the diff picker directly, got %T", tm.(core.Router).Top())
 	}
-	out := tm.View()
+	out := view(tm)
 	if !strings.Contains(out, "beta") || !strings.Contains(out, "wip.txt") {
 		t.Errorf("d should open the picker for the *highlighted* repo:\n%s", out)
 	}
@@ -327,14 +327,14 @@ func TestDiffKeyOnRepoRow(t *testing.T) {
 		t.Errorf("d opened the wrong repo's diff — alpha is not highlighted:\n%s", out)
 	}
 
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
+	tm = pump(tm, keyMsg("esc"))
 	// The git menu was seeded under the picker (repoui.DiffAction), so esc lands on the hub
 	// rather than the list — with Commit right there, which is the reason for seeding it. It was
 	// never the top screen until this pop, so its rows also prove it got laid out on the way up.
 	if _, ok := tm.(core.Router).Top().(*ReposScreen); ok {
 		t.Fatalf("esc should land on the seeded git menu, got the repo list")
 	}
-	if out := tm.View(); !strings.Contains(out, "Commit") {
+	if out := view(tm); !strings.Contains(out, "Commit") {
 		t.Errorf("esc should land on the git menu, with Commit reachable:\n%s", out)
 	}
 }
@@ -346,11 +346,11 @@ func TestDiffKeyOnRepoRow(t *testing.T) {
 func TestDiffAllRowIncludesUntracked(t *testing.T) {
 	tm := sized(router(dirtyRepoTree(t)))
 
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter}) // the top row: the whole repo's diff
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("d"))
+	tm = pump(tm, keyMsg("enter")) // the top row: the whole repo's diff
 
-	out := tm.View()
+	out := view(tm)
 	if !strings.Contains(out, "second") {
 		t.Errorf("the aggregate diff should show the tracked file's added line:\n%s", out)
 	}
@@ -370,31 +370,31 @@ func TestDiffViewWiring(t *testing.T) {
 	tm := sized(r)
 
 	// down to beta (the dirty one; alpha sorts first), then v for its git menu.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'v'}})
-	if out := tm.View(); !strings.Contains(out, "Diff") {
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("v"))
+	if out := view(tm); !strings.Contains(out, "Diff") {
 		t.Fatalf("the git menu should offer a Diff row:\n%s", out)
 	}
 
 	// Diff sits under Status: down once from Fetch, twice to reach it.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter})
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("enter"))
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("Diff should open the file picker, got %T", tm.(core.Router).Top())
 	}
-	out := tm.View()
+	out := view(tm)
 	if !strings.Contains(out, "beta") || !strings.Contains(out, "wip.txt") {
 		t.Errorf("the picker should list the repo row and the changed files:\n%s", out)
 	}
 
 	// The top row is the whole repo's diff.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter})
+	tm = pump(tm, keyMsg("enter"))
 	top := tm.(core.Router).Top()
 	if _, ok := top.(*repoui.DiffScreen); !ok {
 		t.Fatalf("selecting a row should open the DiffScreen, got %T", top)
 	}
-	out = tm.View()
+	out = view(tm)
 	if !strings.Contains(out, "second") {
 		t.Errorf("the diff should show the added line:\n%s", out)
 	}
@@ -410,8 +410,8 @@ func TestDiffViewWiring(t *testing.T) {
 
 	// s cycles auto → unified → side by side. The first press is the explicit unified,
 	// which at this width renders the same thing auto just did but now says so.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
-	if out = tm.View(); !strings.Contains(out, "unified") {
+	tm = pump(tm, keyMsg("s"))
+	if out = view(tm); !strings.Contains(out, "unified") {
 		t.Errorf("the first press of s should select unified and label it:\n%s", out)
 	}
 	if strings.Contains(out, "needs") {
@@ -421,44 +421,44 @@ func TestDiffViewWiring(t *testing.T) {
 	// The second press asks for side by side. The terminal is 90 cols — under
 	// minSplitWidth — so it must fall back and explain itself rather than look like a
 	// dead key. This is the one case that still warns; auto never does.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
-	if out = tm.View(); !strings.Contains(out, "needs") {
+	tm = pump(tm, keyMsg("s"))
+	if out = view(tm); !strings.Contains(out, "needs") {
 		t.Errorf("at 90 cols, an explicit side by side should fall back and say why:\n%s", out)
 	}
 
 	// Widen past minSplitWidth: the same request now takes effect.
 	tm, _ = tm.Update(tea.WindowSizeMsg{Width: 140, Height: 30})
-	if out = tm.View(); !strings.Contains(out, "side by side") || strings.Contains(out, "needs") {
+	if out = view(tm); !strings.Contains(out, "side by side") || strings.Contains(out, "needs") {
 		t.Errorf("at 140 cols, side by side should engage and drop the warning:\n%s", out)
 	}
 
 	// w must wrap the DIFF, not the log pane, while the pane is unfocused.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'w'}})
+	tm = pump(tm, keyMsg("w"))
 	if d := tm.(core.Router).Top().(*repoui.DiffScreen); !d.Wrapped() {
 		t.Error("w should wrap the diff while the output pane is unfocused")
 	}
 	if pane.Wrapped() {
 		t.Error("w must not wrap the log pane while the diff is on top and the pane unfocused")
 	}
-	if out = tm.View(); !strings.Contains(out, "wrap") {
+	if out = view(tm); !strings.Contains(out, "wrap") {
 		t.Errorf("the title bar should advertise wrap mode:\n%s", out)
 	}
 
 	// esc leaves the diff and returns to the picker, rather than quitting the flow.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEsc})
+	tm = pump(tm, keyMsg("esc"))
 	if _, ok := tm.(core.Router).Top().(*components.PickerScreen); !ok {
 		t.Fatalf("esc should return to the file picker, got %T", tm.(core.Router).Top())
 	}
 
 	// An untracked file has no HEAD blob, so it takes the --no-index path (which exits 1
 	// by design). Drive it: wip.txt is the last row, below the repo row and f.
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyDown})
-	tm = pump(tm, tea.KeyMsg{Type: tea.KeyEnter})
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("down"))
+	tm = pump(tm, keyMsg("enter"))
 	if _, ok := tm.(core.Router).Top().(*repoui.DiffScreen); !ok {
 		t.Fatalf("an untracked file should open a DiffScreen, got %T", tm.(core.Router).Top())
 	}
-	if out = tm.View(); !strings.Contains(out, "uncommitted") {
+	if out = view(tm); !strings.Contains(out, "uncommitted") {
 		t.Errorf("an untracked file should diff against /dev/null and show its contents as additions:\n%s", out)
 	}
 	if strings.Contains(out, "could not read the diff") {

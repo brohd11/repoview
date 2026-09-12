@@ -1,6 +1,10 @@
 package app
 
-import "charm.land/bubbles/v2/key"
+import (
+	"charm.land/bubbles/v2/key"
+
+	"github.com/brohd11/bubblestack/core"
+)
 
 // keys are repoview's screen-level bindings that aren't part of bubblestack's framework keymap
 // (core.Keys). Enter — open the highlighted repo's git menu — is the list's own select key, so
@@ -29,6 +33,7 @@ var keys = struct {
 	GitAll:         key.NewBinding(key.WithKeys("V"), key.WithHelp("V", "git all")),
 	RootGit:        key.NewBinding(key.WithKeys("ctrl+v"), key.WithHelp("ctrl+v", "root git")),
 	Fetch:          key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "fetch all")),
-	Actions:        key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "actions")),
-	Sort:           key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sort")),
+	// The shared binding, so the ctrl+alt+a alias reaches repoview too (core.Keys).
+	Actions: core.Keys.Actions,
+	Sort:    key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sort")),
 }

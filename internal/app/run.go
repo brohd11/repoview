@@ -27,7 +27,7 @@ func Run(root string, depth int, version string) error {
 		},
 		Init:                 SelfUpdateCheckCmd,
 		RefreshAction:        func(sh *core.Shared) core.Action { return refreshAction(sh) },
-		TerminalAction:       func(dir string) core.Action { return sysopen.TerminalInline(dir) },
+		TerminalAction:       func(dir string) core.Action { return sysopen.TerminalInlineFor("repoview", dir) },
 		TerminalWindowAction: func(dir string) core.Action { return sysopen.Terminal(dir) },
 		OpenDirAction:        func(dir string) core.Action { return sysopen.Path(dir, false) },
 	})

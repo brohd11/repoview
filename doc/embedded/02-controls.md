@@ -17,6 +17,10 @@ Every key repoview responds to, grouped by what it acts on.
 - `a` — the Actions menu (theme, docs, update, refresh)
 - `r` — re-scan the directory and refresh git state
 
+The `t` shell shows `[repoview] exit returns to repoview` above each zsh, bash or fish
+prompt. Nested app terminals show the full app chain. Other shells show this reminder
+once on entry; your existing prompt and shell configuration remain in use.
+
 ## Moving around
 
 - `up` / `down` or `k` / `j` — move the cursor

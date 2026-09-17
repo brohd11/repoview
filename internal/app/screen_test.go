@@ -101,7 +101,7 @@ func pump(tm tea.Model, msg tea.Msg) tea.Model {
 func TestReposScreenWiring(t *testing.T) {
 	tm := sized(router(twoRepoTree(t)))
 
-	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
+	if _, ok := tm.(core.Router).Top().(*components.RootListScreen); !ok {
 		t.Fatalf("want the Repos screen on top, got %T", tm.(core.Router).Top())
 	}
 	// The list shows both repos, and the dirty one carries the marker.
@@ -152,7 +152,7 @@ func TestReposScreenWiring(t *testing.T) {
 	// esc back to the root; a git flow's RefreshMsg must rebuild the list without panicking.
 	tm = pump(tm, keyMsg("esc"))
 	tm = pump(tm, core.PropagateAll(RescanMsg{}))
-	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
+	if _, ok := tm.(core.Router).Top().(*components.RootListScreen); !ok {
 		t.Fatalf("after refresh, want the Repos screen on top, got %T", tm.(core.Router).Top())
 	}
 	if out := view(tm); !strings.Contains(out, "alpha") {
@@ -254,7 +254,7 @@ func TestRootGitKey(t *testing.T) {
 	}
 	// esc returns to the list.
 	tm = pump(tm, keyMsg("esc"))
-	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
+	if _, ok := tm.(core.Router).Top().(*components.RootListScreen); !ok {
 		t.Fatalf("esc should return to the repo list, got %T", tm.(core.Router).Top())
 	}
 }
@@ -267,7 +267,7 @@ func TestRootGitKeyNotACheckout(t *testing.T) {
 	// synchronously and wipe the line before the assert.
 	tm, _ = tm.Update(keyMsg("ctrl+v"))
 
-	if _, ok := tm.(core.Router).Top().(*ReposScreen); !ok {
+	if _, ok := tm.(core.Router).Top().(*components.RootListScreen); !ok {
 		t.Fatalf("ctrl+v on a non-checkout base should not navigate, got %T", tm.(core.Router).Top())
 	}
 	if out := view(tm); !strings.Contains(out, "not a git checkout") {
@@ -331,7 +331,7 @@ func TestDiffKeyOnRepoRow(t *testing.T) {
 	// The git menu was seeded under the picker (repoui.DiffAction), so esc lands on the hub
 	// rather than the list — with Commit right there, which is the reason for seeding it. It was
 	// never the top screen until this pop, so its rows also prove it got laid out on the way up.
-	if _, ok := tm.(core.Router).Top().(*ReposScreen); ok {
+	if _, ok := tm.(core.Router).Top().(*components.RootListScreen); ok {
 		t.Fatalf("esc should land on the seeded git menu, got the repo list")
 	}
 	if out := view(tm); !strings.Contains(out, "Commit") {

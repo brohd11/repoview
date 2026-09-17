@@ -14,7 +14,7 @@ import (
 )
 
 // repoSortModes is the repo list's sort cycle: A→Z, Z→A, then status (attention-worthy
-// repos first). Passed to components.CycleSort by ReposScreen's "s" handler.
+// repos first). Passed to components.CycleSort by the root's "s" callback.
 var repoSortModes = []components.SortMode{components.SortAlpha, components.SortReverse, components.SortStatus}
 
 // repoListItems builds the list contents from the last scan, ordered per mode: one row
@@ -87,7 +87,7 @@ func repoRank(r repo.Repo) int {
 
 // repoRow builds one list row: the repo's base-relative path (plus any warning markers) as the
 // name, its branch as the description, enter → the shared per-repo git submenu, and the row's own
-// shortcuts (dispatched for the highlighted row by RootUpdate) — "v" the git submenu (an alias of
+// shortcuts (dispatched for the highlighted row by RootListScreen) — "v" the git submenu (an alias of
 // enter), "d" that repo's diff list (repoui.DiffAction, seeded beneath the git submenu), and
 // "t" a terminal at the repo's directory (in this process; "T" for a window).
 func repoRow(r repo.Repo) components.Item {

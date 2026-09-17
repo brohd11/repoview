@@ -9,6 +9,9 @@ import (
 // scan root/depth and the repos found by the last scan. There is no manifest — the list is
 // simply whatever a fresh scan of Root turns up, which is the whole point of the tool.
 type Ctx struct {
+	// ListCompact is the session density shared by standard roots and pickers.
+	ListCompact bool
+
 	Root    string
 	Depth   int
 	Version string
@@ -64,3 +67,6 @@ type RescanMsg struct{}
 func (c *Ctx) Receive(sh *core.Shared, payload any) core.Action {
 	return core.OnThemeChange(payload)
 }
+
+// ListDensity opts standard lists into the app-wide session preference.
+func (c *Ctx) ListDensity() *bool { return &c.ListCompact }

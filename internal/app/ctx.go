@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/brohd11/bubblestack/core"
 	"github.com/brohd11/gitstack/repo"
+	"github.com/brohd11/gitstack/repoui"
 )
 
 // Ctx is repoview's app context, stored on core.Shared.App and recovered with Of. It holds the
@@ -56,9 +57,37 @@ func (c *Ctx) Scan() error {
 // or the root checkout itself.
 func (c *Ctx) HasAny() bool { return len(c.Repos) > 0 || c.RootRepo != nil }
 
+// RefreshRepo updates a known checkout and its enclosing repos without scanning
+// the tree. An operation on the root itself can change the tree, so it rescans.
+func (c *Ctx) RefreshRepo(msg repoui.RepoRefreshMsg) error {
+	if msg.Targets(c.Root) {
+		return c.Scan()
+	}
+	known := false
+	for _, r := range c.Repos {
+		known = known || msg.Targets(r.Dir)
+	}
+	if !known {
+		return nil
+	}
+	for i, r := range c.Repos {
+		if msg.Affects(r.Dir) {
+			c.Repos[i] = repo.Describe(r.Name, r.Dir)
+		}
+	}
+	if c.RootRepo != nil && msg.Affects(c.RootRepo.Dir) {
+		root, ok := repo.DescribeRoot(c.Root)
+		c.RootRepo = nil
+		if ok {
+			c.RootRepo = &root
+		}
+	}
+	return nil
+}
+
 // RescanMsg is repoview's "reload yourself" broadcast: the repo list re-scans from disk on it.
 // The Refresh action and the global Refresh key ('r') raise it; the shared git flows raise
-// repoui.RefreshMsg after an op, which the screen treats the same way.
+// repoui.RefreshMsg after batch operations, which the screen treats the same way.
 type RescanMsg struct{}
 
 // Receive handles app-level broadcasts. On a theme change it rebuilds the cached root so it

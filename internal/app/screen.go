@@ -72,12 +72,15 @@ func rootGitAction(sh *core.Shared) core.Action {
 	return core.Push(repoui.RepoMenu(sh, *c.RootRepo, c.RootRepo.Name))
 }
 
-// receive rebuilds the list from a fresh scan on repoview's own RescanMsg (the Refresh
-// action / "r") or the shared git flows' repoui.RefreshMsg (raised after a pull/push/commit/
-// single fetch) — both mean "the tree changed, re-read it". repoui.FetchDoneMsg additionally
-// logs each repo's outcome and summarizes (repoui.LogFetchResults).
+// receive updates cached state for one checkout or reloads the whole tree for
+// batch/manual refreshes. Fetch completion also logs the batch outcomes.
 func (s *reposState) receive(sh *core.Shared, payload any) core.Action {
 	switch p := payload.(type) {
+	case repoui.RepoRefreshMsg:
+		if err := Of(sh).RefreshRepo(p); err != nil {
+			return core.StatusErr(err)
+		}
+		s.screen.SetItems(repoListItems(sh, s.sort))
 	case repoui.RefreshMsg, RescanMsg:
 		return s.rescan(sh)
 	case repoui.FetchDoneMsg:

@@ -93,9 +93,7 @@ func (s *reposState) receive(sh *core.Shared, payload any) core.Action {
 	return core.Action{}
 }
 
-// rescan re-reads the tree and rebuilds the list from it. A scan failure keeps the old list
-// (Ctx.Scan leaves it intact) and says so on the status line, rather than letting the stale
-// list look current.
+// rescan rebuilds the list from disk. A failure keeps the old list and reports it.
 func (s *reposState) rescan(sh *core.Shared) core.Action {
 	if err := Of(sh).Scan(); err != nil {
 		return core.StatusErr(err)

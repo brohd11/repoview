@@ -9,6 +9,7 @@ import (
 
 	"github.com/brohd11/bubblestack/components"
 	"github.com/brohd11/bubblestack/core"
+	"github.com/brohd11/bubblestack/tuitest"
 	"github.com/brohd11/gitstack/repoui"
 
 	tea "charm.land/bubbletea/v2"
@@ -78,22 +79,7 @@ func sized(tm tea.Model) tea.Model {
 	return tm
 }
 
-// pump delivers msg, then runs the returned command and feeds its (single, non-batch) result
-// back — enough to drive the navigation commands (push/pop) and broadcasts.
-func pump(tm tea.Model, msg tea.Msg) tea.Model {
-	tm, cmd := tm.Update(msg)
-	for i := 0; i < 8 && cmd != nil; i++ {
-		out := cmd()
-		if out == nil {
-			break
-		}
-		if _, isBatch := out.(tea.BatchMsg); isBatch {
-			break
-		}
-		tm, cmd = tm.Update(out)
-	}
-	return tm
-}
+var pump = tuitest.Pump
 
 // TestReposScreenWiring drives the whole tool: the scanned list renders with the right markers,
 // enter opens a repo's shared git submenu, V the all-repos menu, a the Actions menu, and a git

@@ -1,8 +1,4 @@
-// Package docs is repoview's in-TUI manual adapter: the Docs index opened from
-// Actions ▸ Docs. The manual's pages live in the repo's doc folder
-// (repoview/doc/embedded, exposed by the doc package) so they're easy to find and
-// edit; the parse/render/index machinery is shared bubblestack machinery
-// (components).
+// Package docs opens repoview's manual (the doc package) in the shared docs index.
 package docs
 
 import (

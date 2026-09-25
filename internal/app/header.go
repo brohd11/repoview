@@ -7,10 +7,8 @@ import (
 	"github.com/brohd11/gitstack/repoui"
 )
 
-// Header renders repoview's persistent context box: the scanned root and how many git
-// checkouts it holds. When the base is itself a checkout, its Root: line also carries the
-// repo's status marker (behind / ahead / dirty). Wired onto core.Chrome.Header, so the router
-// draws it above every screen.
+// Header renders the scanned root (with its status marker when it is a checkout) and the
+// repo count.
 func Header(sh *core.Shared) string {
 	c := Of(sh)
 	// When the base is a checkout its status marker shares the line, so RootLineValue

@@ -1,12 +1,6 @@
-// Package doc ships repoview's user manual: the markdown pages in embedded/,
-// compiled into the binary and browsed in-app via Actions ▸ Docs (the TUI adapter
-// lives in internal/app/docs). The pages sit here — the repo's doc folder — rather
-// than inside the app package so they're easy to find and edit; go:embed can't
-// reach a parent directory, so the embed must live at this level.
-//
-// Adding a page is dropping a numbered .md into embedded/ — no code change. The
-// filename orders it, the first "# " heading is its title, and the first line
-// under that heading is its one-line description in the index.
+// Package doc embeds repoview's manual pages (embedded/*.md), browsed via Actions ▸ Docs.
+// Add a page by dropping in a numbered .md: the first "# " heading is its title and the
+// line under it its description.
 package doc
 
 import (

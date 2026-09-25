@@ -7,12 +7,7 @@ import (
 	"github.com/brohd11/bubblestack/sysopen"
 )
 
-// Run scans root for git repos and launches the repoview TUI: a single repo-list tab (so
-// bubblestack draws no tab strip), the shared git screens reached from it, the persistent
-// header, a log/output pane (the git flows stream into it), and a status line. The shared
-// ~/.bubblestack theme, if any, is applied by bubblestack.Run; the global Refresh key rescans.
-// version is the binary's version string — the Init startup command uses it for a background
-// self-update check that notes "update available" on the status line (silent otherwise).
+// Run scans root for git repos and launches the repoview TUI.
 func Run(root string, depth int, version string) error {
 	return bubblestack.Run(bubblestack.Config{
 		App:    New(root, depth, version),

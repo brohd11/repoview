@@ -6,9 +6,7 @@ import (
 	"github.com/brohd11/bubblestack/core"
 )
 
-// keys are repoview's screen-level bindings that aren't part of bubblestack's framework keymap
-// (core.Keys). Enter — open the highlighted repo's git menu — is the list's own select key, so
-// it isn't here; these are the extras the repo list advertises and matches on.
+// keys are repoview's screen-level bindings beyond core.Keys.
 var keys = struct {
 	Git            key.Binding // open the highlighted repo's git menu (alias of enter)
 	Diff           key.Binding // open the highlighted repo's diff list, skipping the git menu
@@ -21,10 +19,7 @@ var keys = struct {
 	Actions        key.Binding // open the Actions menu (theme, refresh)
 	Sort           key.Binding // cycle the repo list's sort order (A→Z / Z→A / status)
 }{
-	// v/d/t are row-level (dispatched via the highlighted row's Item.Keys). v = version control,
-	// mirroring gdaddon — not g/G, which bubbles reserves for jump-to-top/bottom on every list.
-	// t/T/ctrl+t mirror core.Keys exactly: t borrows this terminal, T spawns a window, ctrl+t
-	// is the file manager.
+	// Row-level keys. v, not g/G, which lists use for top/bottom.
 	Git:            key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "git")),
 	Diff:           key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "diff")),
 	Terminal:       key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "terminal")),

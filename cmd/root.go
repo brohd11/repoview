@@ -12,22 +12,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// version is the binary version; defaults to "dev" for a plain `go build`. The makefile stamps
-// it via -X ldflags (git describe --tags --always --dirty), so release and `make` binaries report
-// their real version and the self-update check can compare it against the latest tag.
+// version is stamped by the makefile via -X ldflags; "dev" for a plain go build.
 var version = "dev"
 
 var rootDepth int
 
-// depthEnv names the environment variable that supplies a scan depth when the command
-// line gives none, so a depth you always want need not be typed every run. It backs both
-// the TUI and `repoview repos`, whose --depth means the same thing.
+// depthEnv supplies a default scan depth for both the TUI and `repoview repos`.
 const depthEnv = "REPOVIEW_DEPTH"
 
-// resolveDepth picks the depth to scan with: the flag when it was actually typed,
-// otherwise REPOVIEW_DEPTH, otherwise the flag's own default. The ladder itself is
-// goutil/envopt.Int -- gote had written the identical function for GOTE_DEPTH, down to
-// the doc comment and the test table. repoview does not need envopt's `set` return.
+// resolveDepth picks the scan depth: a typed flag, else $REPOVIEW_DEPTH, else the default.
 func resolveDepth(flagDepth int, flagChanged bool) (int, error) {
 	depth, _, err := envopt.Int(depthEnv, flagDepth, flagChanged)
 	return depth, err
@@ -60,9 +53,7 @@ REPOVIEW_DEPTH= (blank) drops it for one run.`,
 func init() {
 	rootCmd.SetVersionTemplate("repoview {{.Version}}\n")
 	rootCmd.Flags().IntVarP(&rootDepth, "depth", "d", 1, "maximum directory depth to scan for git repos")
-	// The real default is the ladder resolveDepth walks, not the 1 pflag would print on
-	// its own. DefValue is only ever the string cobra renders in "(default %s)", so
-	// rewriting it states that ladder in the one place a reader looks for it.
+	// Show the fallback ladder resolveDepth walks.
 	rootCmd.Flags().Lookup("depth").DefValue = "$REPOVIEW_DEPTH, else 1"
 }
 
@@ -72,9 +63,8 @@ func Execute() {
 	}
 }
 
-// runRoot parses the flexible positionals (int → depth, else → root dir) and launches the TUI.
-// A positional integer overrides the --depth flag, which in turn overrides $REPOVIEW_DEPTH
-// (see resolveDepth); the last non-integer arg wins as the root.
+// runRoot parses the positionals (int → depth, else root dir) and launches the TUI. A
+// positional depth beats --depth, which beats $REPOVIEW_DEPTH.
 func runRoot(cmd *cobra.Command, args []string) error {
 	depth, err := resolveDepth(rootDepth, cmd.Flags().Changed("depth"))
 	if err != nil {

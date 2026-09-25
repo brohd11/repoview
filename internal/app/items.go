@@ -37,10 +37,8 @@ func repoListItems(sh *core.Shared, mode components.SortMode) []list.Item {
 	return items
 }
 
-// sortRepos reorders repos in place for the chosen mode: A→Z / Z→A by name
-// (case-insensitive), or by repoRank (git state) with a name tie-break. Sorting the
-// repo.Repo values — not the finished rows — keeps the status mode keyed on real git
-// state rather than the marker-suffixed row Title.
+// sortRepos sorts repos in place by name or by repoRank, sorting repo values rather than the
+// marker-suffixed rows.
 func sortRepos(repos []repo.Repo, mode components.SortMode) {
 	name := func(i int) string { return strings.ToLower(repos[i].Name) }
 	switch mode {
@@ -59,9 +57,7 @@ func sortRepos(repos []repo.Repo, mode components.SortMode) {
 	}
 }
 
-// Attention tiers for SortStatus, most-urgent (lowest) first: behind upstream (there's
-// something to pull), then uncommitted changes, then unpushed local commits
-// (informational), then a clean/settled checkout.
+// Attention tiers for SortStatus, most urgent first.
 const (
 	rankBehind = iota // behind its upstream
 	rankDirty         // uncommitted changes
@@ -85,11 +81,8 @@ func repoRank(r repo.Repo) int {
 	return rank
 }
 
-// repoRow builds one list row: the repo's base-relative path (plus any warning markers) as the
-// name, its branch as the description, enter → the shared per-repo git submenu, and the row's own
-// shortcuts (dispatched for the highlighted row by RootListScreen) — "v" the git submenu (an alias of
-// enter), "d" that repo's diff list (repoui.DiffAction, seeded beneath the git submenu), and
-// "t" a terminal at the repo's directory (in this process; "T" for a window).
+// repoRow builds one row: relative path (with markers) and branch. Enter and v open the git
+// menu, d the diff list, t/T a terminal.
 func repoRow(r repo.Repo) components.Item {
 	return components.Item{
 		Name: r.Name + repo.StatusMarker(r),

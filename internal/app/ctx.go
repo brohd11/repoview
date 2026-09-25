@@ -6,9 +6,7 @@ import (
 	"github.com/brohd11/gitstack/repoui"
 )
 
-// Ctx is repoview's app context, stored on core.Shared.App and recovered with Of. It holds the
-// scan root/depth and the repos found by the last scan. There is no manifest — the list is
-// simply whatever a fresh scan of Root turns up, which is the whole point of the tool.
+// Ctx is repoview's app context: the scan root/depth and the repos found by the last scan.
 type Ctx struct {
 	// ListCompact is the session density shared by standard roots and pickers.
 	ListCompact bool
@@ -17,10 +15,8 @@ type Ctx struct {
 	Depth   int
 	Version string
 	Repos   []repo.Repo
-	// RootRepo is the scanned base itself, when it is a git checkout (nil otherwise). It never
-	// rides Repos — the list is nested checkouts only. The header reads it to show the root's
-	// own status marker, fetch-all appends it to the fetch set, and the all-repos menu offers
-	// it via its include-root toggle.
+	// RootRepo is the scanned base when it is itself a checkout (nil otherwise). It is not in
+	// Repos.
 	RootRepo *repo.Repo
 }
 
@@ -35,9 +31,8 @@ func New(root string, depth int, version string) *Ctx {
 // Of recovers the repoview context from a Shared. Screens call c := app.Of(sh).
 func Of(sh *core.Shared) *Ctx { return core.App[Ctx](sh) }
 
-// Scan re-reads every git checkout under Root — branch, upstream divergence, and dirty state
-// per repo (all local reads). A scan error leaves the previous list intact rather than blanking
-// the screen; the error is returned so a caller with a status line can surface it.
+// Scan re-reads every checkout under Root (local reads only). On error the previous list is
+// kept and the error returned.
 func (c *Ctx) Scan() error {
 	repos, err := repo.Scan(c.Root, c.Depth)
 	if err != nil {
@@ -85,14 +80,10 @@ func (c *Ctx) RefreshRepo(msg repoui.RepoRefreshMsg) error {
 	return nil
 }
 
-// RescanMsg is repoview's "reload yourself" broadcast: the repo list re-scans from disk on it.
-// The Refresh action and the global Refresh key ('r') raise it; the shared git flows raise
-// repoui.RefreshMsg after batch operations, which the screen treats the same way.
+// RescanMsg makes the repo list re-scan from disk.
 type RescanMsg struct{}
 
-// Receive handles app-level broadcasts. On a theme change it rebuilds the cached root so it
-// re-bakes its list/delegate styles from the new palette (core.OnThemeChange; the
-// router-drawn chrome repaints on its own). Everything else is handled by the screen.
+// Receive rebuilds the cached root on a theme change.
 func (c *Ctx) Receive(sh *core.Shared, payload any) core.Action {
 	return core.OnThemeChange(payload)
 }

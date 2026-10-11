@@ -62,7 +62,10 @@ func router(root string) core.Router {
 // hold the reference from construction.
 func routerWithPane(root string) (core.Router, *components.LogPane) {
 	pane := components.NewLogPane()
-	sh := core.NewShared(New(root, 5, "dev"))
+	// Scan inline so the first frame already shows described rows (the app describes async).
+	c := New(root, 5, "dev")
+	c.Scan()
+	sh := core.NewShared(c)
 	header := core.NewHeaderPane(Header)
 	header.OnClick = func(sh *core.Shared, _, _ int) core.Action { return rootGitAction(sh) }
 	sh.Chrome = &core.Chrome{Header: header, Output: pane, Status: components.NewStatusLine()}

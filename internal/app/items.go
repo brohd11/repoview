@@ -27,26 +27,34 @@ func repoListItems(sh *core.Shared, mode components.SortMode) []list.Item {
 			Desc: "nothing under this directory has a .git — try a different path or -depth",
 		}}
 	}
+	c := Of(sh)
 	sorted := make([]repo.Repo, len(repos))
 	copy(sorted, repos)
-	sortRepos(sorted, mode)
+	sortRepos(sorted, mode, c.rankSnap)
 	items := make([]list.Item, len(sorted))
 	for i, r := range sorted {
-		items[i] = repoRow(r)
+		items[i] = repoRow(r, c.Pending[r.Dir])
 	}
 	return items
 }
 
 // sortRepos sorts repos in place by name or by repoRank, sorting repo values rather than the
-// marker-suffixed rows.
-func sortRepos(repos []repo.Repo, mode components.SortMode) {
+// marker-suffixed rows. snap, when set, overrides the rank of the repos it names, holding
+// the status order still while a refresh lands.
+func sortRepos(repos []repo.Repo, mode components.SortMode, snap map[string]int) {
+	rank := func(r repo.Repo) int {
+		if n, ok := snap[r.Dir]; ok {
+			return n
+		}
+		return repoRank(r)
+	}
 	name := func(i int) string { return strings.ToLower(repos[i].Name) }
 	switch mode {
 	case components.SortReverse:
 		sort.SliceStable(repos, func(i, j int) bool { return name(i) > name(j) })
 	case components.SortStatus:
 		sort.SliceStable(repos, func(i, j int) bool {
-			ri, rj := repoRank(repos[i]), repoRank(repos[j])
+			ri, rj := rank(repos[i]), rank(repos[j])
 			if ri != rj {
 				return ri < rj
 			}
@@ -82,12 +90,17 @@ func repoRank(r repo.Repo) int {
 }
 
 // repoRow builds one row: relative path (with markers) and branch. Enter and v open the git
-// menu, d the diff list, t/T a terminal.
-func repoRow(r repo.Repo) components.Item {
+// menu, d the diff list, t/T a terminal. A pending row shows its cached state muted.
+func repoRow(r repo.Repo, pending bool) components.Item {
+	desc := repoDesc(r)
+	if pending {
+		desc += " · refreshing…"
+	}
 	return components.Item{
-		Name: r.Name + repo.StatusMarker(r),
-		Desc: repoDesc(r),
-		Pick: func(sh *core.Shared) core.Action { return core.Push(repoui.RepoMenu(sh, r, r.Name)) },
+		Name:    r.Name + repo.StatusMarker(r),
+		Desc:    desc,
+		Pending: pending,
+		Pick:    func(sh *core.Shared) core.Action { return core.Push(repoui.RepoMenu(sh, r, r.Name)) },
 		Keys: func(sh *core.Shared, k string) (core.Action, bool) {
 			switch {
 			case core.MatchKey(k, keys.Git):
@@ -106,8 +119,12 @@ func repoRow(r repo.Repo) components.Item {
 	}
 }
 
-// repoDesc is the row's status line: the checked-out branch (or a note when detached).
+// repoDesc is the row's status line: the checked-out branch (or a note when detached). A
+// repo not yet described has neither, so it shows nothing until its result lands.
 func repoDesc(r repo.Repo) string {
+	if r == (repo.Repo{Name: r.Name, Dir: r.Dir}) {
+		return "⎇ …"
+	}
 	if r.Branch == "" {
 		return "⎇ detached HEAD"
 	}

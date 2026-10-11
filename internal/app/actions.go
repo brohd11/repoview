@@ -13,10 +13,8 @@ func actionsMenu(sh *core.Shared) *components.PickerScreen {
 		"rescan the directory and refresh git state", refreshAction, docs.Pages())
 }
 
-// refreshAction rescans the directory; shared by Actions ▸ Refresh and the "r" key.
+// refreshAction rescans the directory; shared by Actions ▸ Refresh and the "r" key. The
+// rescan is async and reports "Refreshed" itself once every repo has landed.
 func refreshAction(sh *core.Shared) core.Action {
-	return core.Seq(
-		core.PropagateAll(RescanMsg{}),
-		core.SetStatus("Refreshed"),
-	)
+	return core.PropagateAll(RescanMsg{})
 }

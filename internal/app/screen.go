@@ -72,34 +72,42 @@ func rootGitAction(sh *core.Shared) core.Action {
 	return core.Push(repoui.RepoMenu(sh, *c.RootRepo, c.RootRepo.Name))
 }
 
-// receive updates cached state for one checkout or reloads the whole tree for
-// batch/manual refreshes. Fetch completion also logs the batch outcomes.
+// receive updates cached state for one checkout, starts the async refresh for batch/manual
+// reloads, and lands its results row by row. Fetch completion also logs the batch outcomes.
 func (s *reposState) receive(sh *core.Shared, payload any) core.Action {
+	c := Of(sh)
+	if act, ok := c.Refresh.Receive(payload); ok {
+		return act
+	}
 	switch p := payload.(type) {
+	case repoDescribedMsg:
+		ok, act := c.applyDescribed(p)
+		if ok {
+			s.screen.SetItems(repoListItems(sh, s.sort))
+		}
+		return act
 	case repoui.RepoRefreshMsg:
-		if err := Of(sh).RefreshRepo(p); err != nil {
-			return core.StatusErr(err)
+		if c.RefreshRepo(p) {
+			return s.refresh(sh)
 		}
 		s.screen.SetItems(repoListItems(sh, s.sort))
 	case repoui.RefreshMsg, RescanMsg:
-		return s.rescan(sh)
+		return s.refresh(sh)
 	case repoui.FetchDoneMsg:
 		s.fetching = false
 		return core.Seq(
-			s.rescan(sh),
 			repoui.LogFetchResults(sh, p.Results, "repo(s)", "no repos fetched"),
+			s.refresh(sh),
 		)
 	}
 	return core.Action{}
 }
 
-// rescan rebuilds the list from disk. A failure keeps the old list and reports it.
-func (s *reposState) rescan(sh *core.Shared) core.Action {
-	if err := Of(sh).Scan(); err != nil {
-		return core.StatusErr(err)
-	}
+// refresh starts the async rescan and shows the rediscovered rows (muted) right away.
+func (s *reposState) refresh(sh *core.Shared) core.Action {
+	act := Of(sh).StartRefresh()
 	s.screen.SetItems(repoListItems(sh, s.sort))
-	return core.Action{}
+	return act
 }
 
 // allScope is the single "repos" scope handed to the all-repos menu: every scanned repo, read

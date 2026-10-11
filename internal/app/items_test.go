@@ -40,13 +40,13 @@ func TestSortReposNames(t *testing.T) {
 	}
 
 	alpha := fixture()
-	sortRepos(alpha, components.SortAlpha)
+	sortRepos(alpha, components.SortAlpha, nil)
 	if got := names(alpha); !eq(got, []string{"alpha", "Beta", "gamma"}) {
 		t.Errorf("SortAlpha = %v, want [alpha Beta gamma]", got)
 	}
 
 	rev := fixture()
-	sortRepos(rev, components.SortReverse)
+	sortRepos(rev, components.SortReverse, nil)
 	if got := names(rev); !eq(got, []string{"gamma", "Beta", "alpha"}) {
 		t.Errorf("SortReverse = %v, want [gamma Beta alpha]", got)
 	}
@@ -62,7 +62,7 @@ func TestSortReposStatus(t *testing.T) {
 		{Name: "behind", Sync: repo.GitSync{Behind: 3}},
 		{Name: "aclean"}, // clean, sorts before "clean" within the clean tier
 	}
-	sortRepos(repos, components.SortStatus)
+	sortRepos(repos, components.SortStatus, nil)
 	want := []string{"behind", "dirty", "ahead", "aclean", "clean"}
 	if got := names(repos); !eq(got, want) {
 		t.Errorf("SortStatus = %v, want %v", got, want)

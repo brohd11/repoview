@@ -10,9 +10,9 @@ import (
 )
 
 // Run scans root for git repos and launches the repoview TUI.
-func Run(root string, depth int, version string) error {
+func Run(root string, depth int, version string, nested bool) error {
 	return bubblestack.Run(bubblestack.Config{
-		App:    New(root, depth, version),
+		App:    New(root, depth, version, nested),
 		Header: Header,
 		// A header click opens the root's own git menu, same as ctrl+v.
 		HeaderClick: func(sh *core.Shared, _, _ int) core.Action { return rootGitAction(sh) },

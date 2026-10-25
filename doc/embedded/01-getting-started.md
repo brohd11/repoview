@@ -8,7 +8,7 @@ A working directory tends to fill up with git repos — a handful of projects si
 submodules nested a few levels down, a scratch clone you forgot about. `git status` tells
 you about one at a time.
 
-repoview scans a directory, finds every git checkout under it, and shows them together:
+repoview scans a directory, finds git checkouts under it, and shows them together:
 each repo's branch, and whether it has uncommitted changes or has drifted from its
 upstream. There's no config and no manifest — it re-scans fresh every run.
 
@@ -21,14 +21,21 @@ one level deep (that directory's immediate children); pass a depth to go deeper:
 repoview            # current dir, depth 1
 repoview 4          # current dir, depth 4
 repoview /path 3    # /path, depth 3
+repoview 4 --nested # also gather repos inside discovered repos
 ```
+
+By default, discovery stops descending once it finds a repo beneath the scan directory.
+Plain directories are searched up to the depth limit. Use `--nested` to include repos
+inside those repos, or press `n` on the Repos tab to toggle this for the session.
+The header adds `Nested` after depth while nested mode is enabled.
 
 Set `REPOVIEW_DEPTH` in your shell to pick that starting depth once instead of typing it
 every run; a depth given as an argument or with `--depth` still wins.
 
 Positional args are order-free: an all-digits argument is the depth, anything else is the
 directory. The header shows the scanned root and how many checkouts it found. When the root
-itself is a git checkout, its own status rides the header's `Root:` line.
+itself is a git checkout, its own status rides the header's `Root:` line; discovery still
+searches beneath it in both modes.
 
 ## The list
 

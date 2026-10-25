@@ -17,6 +17,7 @@ type Ctx struct {
 
 	Root    string
 	Depth   int
+	Nested  bool
 	Version string
 	Repos   []repo.Repo
 	// RootRepo is the scanned base when it is itself a checkout (nil otherwise). It is not in
@@ -37,8 +38,8 @@ type Ctx struct {
 // New builds the context and discovers the checkouts (a directory walk, no git), so the
 // first screen has rows to show. Their state is read by the refresh Run's Init starts.
 // version is the binary's version string, used by the self-update check.
-func New(root string, depth int, version string) *Ctx {
-	c := &Ctx{Root: root, Depth: depth, Version: version}
+func New(root string, depth int, version string, nested bool) *Ctx {
+	c := &Ctx{Root: root, Depth: depth, Version: version, Nested: nested}
 	c.Discover()
 	return c
 }
@@ -50,7 +51,7 @@ func Of(sh *core.Shared) *Ctx { return core.App[Ctx](sh) }
 // state, new ones start empty, vanished ones drop, and every one (the root included) is
 // marked Pending for StartRefresh to describe. On error the previous list is kept.
 func (c *Ctx) Discover() error {
-	rels, err := repo.FindGitRepos(c.Root, c.Depth)
+	rels, err := repo.FindGitRepos(c.Root, c.Depth, repo.ScanOptions{SkipNested: !c.Nested})
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func (c *Ctx) Discover() error {
 // that need the state now; the UI refreshes through StartRefresh. On error the previous
 // list is kept and the error returned.
 func (c *Ctx) Scan() error {
-	repos, err := repo.Scan(c.Root, c.Depth)
+	repos, err := repo.Scan(c.Root, c.Depth, repo.ScanOptions{SkipNested: !c.Nested})
 	if err != nil {
 		return err // leave the previous list intact
 	}

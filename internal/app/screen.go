@@ -25,7 +25,7 @@ func NewReposScreen(sh *core.Shared) *components.RootListScreen {
 		PickerOpts: components.PickerOpts{
 			Title: components.SortTitle(listTitle, s.sort),
 			Crumb: "Repos",
-			Help:  []key.Binding{keys.Git, keys.Diff, keys.Terminal, keys.TerminalWindow, keys.OpenDir, keys.Fetch, keys.GitAll, keys.RootGit, keys.Actions, keys.Sort},
+			Help:  []key.Binding{keys.Git, keys.Diff, keys.Terminal, keys.TerminalWindow, keys.OpenDir, keys.Fetch, keys.GitAll, keys.RootGit, keys.Actions, keys.Sort, keys.Nested},
 			OnKey: s.onKey,
 		},
 		Receive: s.receive,
@@ -54,6 +54,10 @@ func (s *reposState) onKey(sh *core.Shared, k string, _ list.Item) (core.Action,
 		return core.Seq(core.SetStatus("fetching repos…"), core.Async(fetchAllCmd(sh))), true
 	case core.MatchKey(k, keys.Actions):
 		return core.Push(actionsMenu(sh)), true
+	case core.MatchKey(k, keys.Nested):
+		c := Of(sh)
+		c.Nested = !c.Nested
+		return s.refresh(sh), true
 	case core.MatchKey(k, keys.Sort):
 		components.CycleSort(s.screen.List(), &s.sort, repoSortModes, listTitle,
 			func(m components.SortMode) []list.Item { return repoListItems(sh, m) })

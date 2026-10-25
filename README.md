@@ -1,16 +1,23 @@
 # repoview
 
 A manifest-free git repo-status viewer for a folder full of projects. Point it at a directory
-and it scans for every nested git checkout (fresh each run) and shows each one's status — branch,
+and it scans for git checkouts (fresh each run) and shows each one's status — branch,
 uncommitted changes, ahead/behind — in a single TUI list, with fetch/pull/push/commit a keypress
 away.
 
 ```
-repoview [dir] [depth]   # TUI; dir defaults to the current directory, depth to 1 (that dir only)
+repoview [dir] [depth]   # TUI; dir defaults to the current directory, depth to 1 (immediate children)
   repoview 4             # a bare integer is the depth — scan 4 levels deep
   repoview /path 3       # scan /path, 3 levels deep
   -d, --depth N          # depth can also be given as a flag (default 1)
+  --nested              # also gather repos inside discovered repos
 ```
+
+By default, discovery stops descending once it finds a repo beneath the scan directory.
+It still searches through plain directories up to the depth limit. Use `--nested` to
+include repos inside those repos, or press **n** on the Repos tab to toggle it for the
+session. The header adds `Nested` after depth while that mode is enabled. If the scan
+directory is itself a repo, discovery still searches beneath it; its status stays in the header.
 
 Set `REPOVIEW_DEPTH` to the depth you always want and both the TUI and `repos` start there
 instead of 1 — `export REPOVIEW_DEPTH=2` in your shell profile, and `repoview` scans two
@@ -27,12 +34,13 @@ needing a decision fails cleanly and sends you to a terminal.
 
 ### `repos` subcommand
 
-Run a shell command in every git repo nested under a directory (the non-interactive counterpart
+Run a shell command in git repos under a directory (the non-interactive counterpart
 to the all-repos screen). The command is joined and run via `sh -c`, so pipes and `&&` work when
 quoted as one argument:
 
 ```
-repoview repos                          # list every nested repo (base-relative paths)
+repoview repos                          # list first repos found (base-relative paths)
+repoview repos --depth 4 --nested        # also list repos inside discovered repos
 repoview repos -- git status -s         # run in each; header + output only when non-empty
 repoview repos --raw -- git fetch       # live-stream each repo's output under its header
 repoview repos --dirty -- git pull      # restrict to repos with uncommitted changes
@@ -40,7 +48,9 @@ repoview repos -C /path --depth 3 -- pwd
 ```
 
 Flags: `-C/--dir` (scan root, default cwd), `--raw` (stream vs the default capture), `--dirty`,
-`--depth` (default `$REPOVIEW_DEPTH`, else 1).
+`--depth` (default `$REPOVIEW_DEPTH`, else 1), `--nested` (default off), `--include-root`
+(also include the scanned directory itself when it is a repo). Discovery follows the same
+rules as the TUI; `--dirty` filters the repos found after discovery.
 
 ## Install
 

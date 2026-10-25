@@ -17,7 +17,7 @@ import (
 func TestTargetedRefreshKeepsOtherReposCached(t *testing.T) {
 	base := twoRepoTree(t)
 	checkoutBase(t, base)
-	c := New(base, 5, "dev")
+	c := New(base, 5, "dev", false)
 	c.Scan()
 	sh := core.NewShared(c)
 	screen := NewReposScreen(sh)
@@ -70,7 +70,7 @@ func drain(sh *core.Shared, screen core.Receiver, act core.Action) []string {
 func TestAsyncRefreshLandsRows(t *testing.T) {
 	base := twoRepoTree(t)
 	checkoutBase(t, base)
-	c := New(base, 5, "dev")
+	c := New(base, 5, "dev", false)
 	if len(c.Repos) != 2 || !c.Pending[c.Repos[1].Dir] || !c.Pending[base] || c.Repos[1].Dirty {
 		t.Fatal("New must discover both repos and the root as pending without describing them")
 	}
@@ -103,7 +103,7 @@ func TestAsyncRefreshLandsRows(t *testing.T) {
 // TestAsyncRefreshDropsStalePass: a rescan superseding a running one drops the first pass's
 // results rather than counting them toward the second.
 func TestAsyncRefreshDropsStalePass(t *testing.T) {
-	c := New(twoRepoTree(t), 5, "dev")
+	c := New(twoRepoTree(t), 5, "dev", false)
 	sh := core.NewShared(c)
 	screen := NewReposScreen(sh)
 	first := screen.Receive(sh, RescanMsg{})

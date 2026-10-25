@@ -13,7 +13,7 @@ import (
 
 func TestDensityPreservesRepoStateAndFetchGuard(t *testing.T) {
 	base := twoRepoTree(t)
-	c := New(base, 5, "dev")
+	c := New(base, 5, "dev", false)
 	sh := core.NewShared(c)
 	sh.Chrome = &core.Chrome{Status: components.NewStatusLine()}
 	r := core.NewRouter(sh, []core.TabEntry{{Title: "Repos", New: func(sh *core.Shared) core.Screen { return NewReposScreen(sh) }}})

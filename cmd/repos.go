@@ -9,6 +9,7 @@ func init() {
 	rootCmd.AddCommand(repocmd.New(repocmd.Options{
 		AppName:      "repoview",
 		DefaultDepth: 1,
+		TopLevelOnly: true,
 		// The real default is the ladder resolveDepth walks, not the 1 pflag would print.
 		DepthDefText: "$" + depthEnv + ", else 1",
 		ResolveDepth: resolveDepth,

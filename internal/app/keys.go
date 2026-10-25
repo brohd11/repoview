@@ -18,6 +18,7 @@ var keys = struct {
 	Fetch          key.Binding // concurrent fetch-all, refreshing ahead/behind
 	Actions        key.Binding // open the Actions menu (theme, refresh)
 	Sort           key.Binding // cycle the repo list's sort order (A→Z / Z→A / status)
+	Nested         key.Binding // toggle discovery inside checkouts
 }{
 	// Row-level keys. v, not g/G, which lists use for top/bottom.
 	Git:            key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "git")),
@@ -31,4 +32,5 @@ var keys = struct {
 	// The shared binding, so the ctrl+alt+a alias reaches repoview too (core.Keys).
 	Actions: core.Keys.Actions,
 	Sort:    key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "sort")),
+	Nested:  key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "toggle nested")),
 }

@@ -21,7 +21,11 @@ func Header(sh *core.Shared) string {
 		note = " · refreshing…"
 		valWidth = max(valWidth-utf8.RuneCountInString(note), 0)
 	}
+	repos := fmt.Sprintf("%d git checkout(s) · depth ≤ %d", len(c.Repos), c.Depth)
+	if c.Nested {
+		repos += " · Nested"
+	}
 	body := core.Label("Root:  ") + core.Value(repoui.RootLineValue(c.Root, c.RootRepo, valWidth)) + core.Label(note) + "\n" +
-		core.Label("Repos: ") + core.Value(fmt.Sprintf("%d git checkout(s) · depth ≤ %d", len(c.Repos), c.Depth))
+		core.Label("Repos: ") + core.Value(repos)
 	return core.HeaderBox(sh.Width(), body)
 }

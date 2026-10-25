@@ -63,7 +63,7 @@ func router(root string) core.Router {
 func routerWithPane(root string) (core.Router, *components.LogPane) {
 	pane := components.NewLogPane()
 	// Scan inline so the first frame already shows described rows (the app describes async).
-	c := New(root, 5, "dev")
+	c := New(root, 5, "dev", false)
 	c.Scan()
 	sh := core.NewShared(c)
 	header := core.NewHeaderPane(Header)

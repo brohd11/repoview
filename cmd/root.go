@@ -16,6 +16,7 @@ import (
 var version = "dev"
 
 var rootDepth int
+var rootNested bool
 
 // depthEnv supplies a default scan depth for both the TUI and `repoview repos`.
 const depthEnv = "REPOVIEW_DEPTH"
@@ -28,13 +29,17 @@ func resolveDepth(flagDepth int, flagChanged bool) (int, error) {
 
 var rootCmd = &cobra.Command{
 	Use:   "repoview [dir] [depth]",
-	Short: "Show git status across every repo nested under a directory (TUI)",
-	Long: `repoview scans a directory for nested git checkouts and shows each one's status —
+	Short: "Show git status across repos under a directory (TUI)",
+	Long: `repoview scans a directory for git checkouts and shows each one's status —
 branch, uncommitted changes, ahead/behind — in a single TUI list, driving fetch/pull/
 push/commit through a shared git menu.
 
+By default it stops descending once a repo beneath the scan directory is found.
+Use --nested to also gather repos inside those repos, or press n in the Repos tab
+to toggle nested discovery. The depth limit applies in both modes.
+
 Positional args are order-free: an all-digits argument is the scan depth, anything else
-is the directory. dir defaults to the current directory; depth to 1 (that dir only).
+is the directory. dir defaults to the current directory; depth to 1 (immediate children).
 
   repoview            # current dir, depth 1
   repoview 4          # current dir, depth 4
@@ -53,6 +58,7 @@ REPOVIEW_DEPTH= (blank) drops it for one run.`,
 func init() {
 	rootCmd.SetVersionTemplate("repoview {{.Version}}\n")
 	rootCmd.Flags().IntVarP(&rootDepth, "depth", "d", 1, "maximum directory depth to scan for git repos")
+	rootCmd.Flags().BoolVar(&rootNested, "nested", false, "also gather repos nested inside discovered repos")
 	// Show the fallback ladder resolveDepth walks.
 	rootCmd.Flags().Lookup("depth").DefValue = "$REPOVIEW_DEPTH, else 1"
 }
@@ -82,5 +88,5 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("could not resolve absolute path for %s: %w", root, err)
 	}
-	return app.Run(abs, depth, version)
+	return app.Run(abs, depth, version, rootNested)
 }

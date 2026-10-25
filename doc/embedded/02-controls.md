@@ -14,6 +14,8 @@ Every key repoview responds to, grouped by what it acts on.
 - `V` — the all-repos git menu: fetch, pull, or push across every repo at once
 - `ctrl+v` — the scanned root's own git menu (when the base directory is itself a checkout)
 - `s` — cycle the sort order: A→Z, Z→A, by status
+- `n` — toggle gathering repos inside discovered repos, then re-scan; the header shows
+  `Nested` after depth while enabled
 - `a` — the Actions menu (theme, docs, update, refresh)
 - `r` — re-scan the directory and refresh git state
 
@@ -49,6 +51,6 @@ The git menus stream their output into a pane below the list:
 
 - `?` — expand the help bar to show every key for the current screen
 
-Row keys (`v`, `d`, `t`, `T`, `ctrl+t`) act on the highlighted repo; `V`, `f`, `s`, `a` act
+Row keys (`v`, `d`, `t`, `T`, `ctrl+t`) act on the highlighted repo; `V`, `f`, `s`, `n`, `a` act
 on the list as a whole. `t`/`T`/`ctrl+t` also work from inside a repo's git menu or diff, on
 whatever directory that screen is showing. The scheme matches gdaddon, its sibling tool.

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/brohd11/gitstack/repo"
 	"github.com/brohd11/goutil/envopt"
 	"github.com/brohd11/repoview/internal/app"
 
@@ -48,11 +49,12 @@ is the directory. dir defaults to the current directory; depth to 1 (immediate c
 Set REPOVIEW_DEPTH to the depth you always want and both this and "repoview repos" start
 there instead of 1. A depth given as an argument or with --depth still wins;
 REPOVIEW_DEPTH= (blank) drops it for one run.`,
-	Version:       version,
-	Args:          cobra.ArbitraryArgs,
-	SilenceUsage:  true,
-	SilenceErrors: false,
-	RunE:          runRoot,
+	Version:           version,
+	Args:              cobra.ArbitraryArgs,
+	SilenceUsage:      true,
+	SilenceErrors:     false,
+	PersistentPreRunE: bootstrap,
+	RunE:              runRoot,
 }
 
 func init() {
@@ -67,6 +69,17 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+// bootstrap prepares optional hook config for both the TUI and subcommands.
+// Messages go to stderr so command output remains usable in pipelines.
+func bootstrap(cmd *cobra.Command, args []string) error {
+	if created, path, err := repo.EnsureHooks("repoview"); err != nil {
+		fmt.Fprintf(cmd.ErrOrStderr(), "could not prepare hook config: %v\n", err)
+	} else if created {
+		fmt.Fprintf(cmd.ErrOrStderr(), "wrote default config to %s\n", path)
+	}
+	return nil
 }
 
 // runRoot parses the positionals (int → depth, else root dir) and launches the TUI. A

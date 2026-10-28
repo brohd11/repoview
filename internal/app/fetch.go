@@ -16,5 +16,5 @@ func fetchAllCmd(sh *core.Shared) tea.Cmd {
 	if c.RootRepo != nil {
 		repos = append(repos, *c.RootRepo)
 	}
-	return repoui.FetchAllCmd(func() []repo.Repo { return repos })
+	return repoui.FetchAllCmd(func() []repo.Repo { return repos }, c.GitHookApp())
 }

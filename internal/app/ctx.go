@@ -47,6 +47,9 @@ func New(root string, depth int, version string, nested bool) *Ctx {
 // Of recovers the repoview context from a Shared. Screens call c := app.Of(sh).
 func Of(sh *core.Shared) *Ctx { return core.App[Ctx](sh) }
 
+// GitHookApp selects repoview's user commands for the shared Git screens.
+func (*Ctx) GitHookApp() string { return "repoview" }
+
 // Discover re-walks Root for checkouts without running git: known repos keep their cached
 // state, new ones start empty, vanished ones drop, and every one (the root included) is
 // marked Pending for StartRefresh to describe. On error the previous list is kept.

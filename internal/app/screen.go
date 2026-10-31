@@ -12,11 +12,10 @@ import (
 
 const listTitle = "Repos"
 
-// reposState owns sorting and in-flight work; RootListScreen owns list interaction.
+// reposState owns sorting; the app context owns in-flight work.
 type reposState struct {
-	screen   *components.RootListScreen
-	sort     components.SortMode
-	fetching bool
+	screen *components.RootListScreen
+	sort   components.SortMode
 }
 
 func NewReposScreen(sh *core.Shared) *components.RootListScreen {
@@ -44,14 +43,15 @@ func (s *reposState) onKey(sh *core.Shared, k string, _ list.Item) (core.Action,
 	case core.MatchKey(k, keys.RootGit):
 		return rootGitAction(sh), true
 	case core.MatchKey(k, keys.Fetch):
-		if s.fetching {
+		c := Of(sh)
+		if c.Fetch.Running() {
 			return core.SetStatus("fetch already running"), true
 		}
-		if c := Of(sh); !c.HasAny() {
+		if !c.HasAny() {
 			return core.SetStatus("no repos to fetch"), true
 		}
-		s.fetching = true
-		return core.Seq(core.SetStatus("fetching repos…"), core.Async(fetchAllCmd(sh))), true
+		cmd, _ := fetchAllCmd(sh) // Running was checked on this same UI turn.
+		return core.Seq(core.SetStatus("fetching repos…"), core.Async(cmd)), true
 	case core.MatchKey(k, keys.Actions):
 		return core.Push(actionsMenu(sh)), true
 	case core.MatchKey(k, keys.Nested):
@@ -98,7 +98,9 @@ func (s *reposState) receive(sh *core.Shared, payload any) core.Action {
 	case repoui.RefreshMsg, RescanMsg:
 		return s.refresh(sh)
 	case repoui.FetchDoneMsg:
-		s.fetching = false
+		if !c.Fetch.Complete(p) {
+			return core.Action{}
+		}
 		return core.Seq(
 			repoui.LogFetchResults(sh, p.Results, "repo(s)", "no repos fetched"),
 			s.refresh(sh),

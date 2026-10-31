@@ -6,7 +6,6 @@ import (
 
 	"github.com/brohd11/bubblestack/components"
 	"github.com/brohd11/bubblestack/core"
-	"github.com/brohd11/gitstack/repoui"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -26,7 +25,7 @@ func TestDensityPreservesRepoStateAndFetchGuard(t *testing.T) {
 	root := r.Top().(*components.RootListScreen)
 	root.List().SetFilterText("alpha")
 	step(keyMsg("s"))
-	step(keyMsg("f"))
+	done := queuedFetchCompletion(t, &c.Fetch)
 	step(keyMsg("D"))
 	if r.Top() != root || !root.Compact() || !strings.Contains(root.List().Title, "Z→A") || root.List().FilterValue() != "alpha" {
 		t.Fatal("density must retain root identity, sort and filter")
@@ -49,7 +48,7 @@ func TestDensityPreservesRepoStateAndFetchGuard(t *testing.T) {
 	if root.List().FilterValue() != "alpha" || len(root.List().VisibleItems()) != 1 {
 		t.Fatal("rescan must preserve a populated filter")
 	}
-	step(core.PropagateAll(repoui.FetchDoneMsg{}))
+	step(core.PropagateAll(done))
 	step(keyMsg("f"))
 	if !strings.Contains(sh.Chrome.Status.View(), "fetching repos") {
 		t.Fatal("fetch completion must clear the guard and allow another fetch")

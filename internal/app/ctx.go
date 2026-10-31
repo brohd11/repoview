@@ -23,6 +23,8 @@ type Ctx struct {
 	// RootRepo is the scanned base when it is itself a checkout (nil otherwise). It is not in
 	// Repos.
 	RootRepo *repo.Repo
+	// Fetch belongs to the app session, surviving root rebuilds and navigation.
+	Fetch repoui.FetchState
 
 	// Pending marks checkouts (by Dir, the root included) whose state the running Refresh is
 	// re-reading; their rows show the cached state muted until their result lands.

@@ -24,6 +24,8 @@ func (c *Ctx) StartRefresh() core.Action {
 	if err := c.Discover(); err != nil {
 		return core.StatusErr(err)
 	}
+	c.ListUpdates.Reset()
+	c.dirtyRows = make(map[string]bool)
 	targets := append([]repo.Repo{}, c.Repos...)
 	if c.RootRepo != nil {
 		targets = append(targets, *c.RootRepo)
@@ -57,6 +59,16 @@ func (c *Ctx) describeCmd(gen int64, r repo.Repo) tea.Cmd {
 // applyDescribed stores one result and clears its pending mark. ok is false for a stale
 // pass's result; act is the final status once the pass completes.
 func (c *Ctx) applyDescribed(m repoDescribedMsg) (ok bool, act core.Action) {
+	if c.Refresh.Stale(m.gen) || !c.Pending[m.repo.Dir] {
+		return false, core.Action{}
+	}
+	i, known := c.repoIndex[m.repo.Dir]
+	if m.repo.Root {
+		known = c.RootRepo != nil && c.RootRepo.Dir == m.repo.Dir
+	}
+	if !known {
+		return false, core.Action{}
+	}
 	ok, act = c.Refresh.Land(m.gen)
 	if !ok {
 		return false, act
@@ -68,11 +80,8 @@ func (c *Ctx) applyDescribed(m repoDescribedMsg) (ok bool, act core.Action) {
 			c.RootRepo = &r
 		}
 	} else {
-		for i := range c.Repos {
-			if c.Repos[i].Dir == m.repo.Dir {
-				c.Repos[i] = m.repo
-			}
-		}
+		c.Repos[i] = m.repo
+		c.dirtyRows[m.repo.Dir] = true
 	}
 	if !c.Refresh.Running() {
 		c.rankSnap = nil

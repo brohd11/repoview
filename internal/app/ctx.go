@@ -32,6 +32,10 @@ type Ctx struct {
 	// Refresh tracks the async describe pass. It lives here, not on the screen, because the
 	// root is rebuilt on theme changes while results are in flight.
 	Refresh components.Refresh
+	// ListUpdates and dirtyRows survive root rebuilds while results are queued.
+	ListUpdates components.UpdateBatch
+	dirtyRows   map[string]bool
+	repoIndex   map[string]int
 	// rankSnap freezes each repo's status-sort rank for the running refresh, so rows do not
 	// jump under the cursor as results land (see repoListItems).
 	rankSnap map[string]int
@@ -76,6 +80,7 @@ func (c *Ctx) Discover() error {
 		c.Pending[dir] = true
 	}
 	c.Repos = repos
+	c.indexRepos()
 	if _, err := os.Stat(filepath.Join(c.Root, ".git")); err != nil {
 		c.RootRepo = nil
 	} else {
@@ -96,6 +101,7 @@ func (c *Ctx) Scan() error {
 		return err // leave the previous list intact
 	}
 	c.Repos = repos
+	c.indexRepos()
 	c.Pending = nil
 	// Scan omits the base itself; describe it separately so the header can show its status and
 	// fetch-all / the batch menu can opt it in, without it ever appearing as a list row.
@@ -104,6 +110,13 @@ func (c *Ctx) Scan() error {
 		c.RootRepo = &root
 	}
 	return nil
+}
+
+func (c *Ctx) indexRepos() {
+	c.repoIndex = make(map[string]int, len(c.Repos))
+	for i, r := range c.Repos {
+		c.repoIndex[r.Dir] = i
+	}
 }
 
 // HasAny reports whether the last scan found anything a git op can act on — a nested repo

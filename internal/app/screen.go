@@ -16,11 +16,13 @@ const listTitle = "Repos"
 type reposState struct {
 	screen *components.RootListScreen
 	sort   components.SortMode
+	order  []string
+	rows   map[string]list.Item
 }
 
 func NewReposScreen(sh *core.Shared) *components.RootListScreen {
 	s := &reposState{}
-	s.screen = components.NewRootList(repoListItems(sh, s.sort), components.RootListOpts{
+	s.screen = components.NewRootList(s.rebuildItems(sh), components.RootListOpts{
 		PickerOpts: components.PickerOpts{
 			Title: components.SortTitle(listTitle, s.sort),
 			Crumb: "Repos",
@@ -60,7 +62,7 @@ func (s *reposState) onKey(sh *core.Shared, k string, _ list.Item) (core.Action,
 		return s.refresh(sh), true
 	case core.MatchKey(k, keys.Sort):
 		components.CycleSort(s.screen.List(), &s.sort, repoSortModes, listTitle,
-			func(m components.SortMode) []list.Item { return repoListItems(sh, m) })
+			func(components.SortMode) []list.Item { return s.rebuildItems(sh) })
 		return core.Action{}, true
 	}
 	return core.Action{}, false
@@ -80,6 +82,12 @@ func rootGitAction(sh *core.Shared) core.Action {
 // reloads, and lands its results row by row. Fetch completion also logs the batch outcomes.
 func (s *reposState) receive(sh *core.Shared, payload any) core.Action {
 	c := Of(sh)
+	if ready, handled := c.ListUpdates.Receive(payload); handled {
+		if ready {
+			s.publish(sh)
+		}
+		return core.Action{}
+	}
 	if act, ok := c.Refresh.Receive(payload); ok {
 		return act
 	}
@@ -87,14 +95,18 @@ func (s *reposState) receive(sh *core.Shared, payload any) core.Action {
 	case repoDescribedMsg:
 		ok, act := c.applyDescribed(p)
 		if ok {
-			s.screen.SetItems(repoListItems(sh, s.sort))
+			if !c.Refresh.Running() {
+				s.rebuild(sh)
+			} else if !p.repo.Root {
+				return core.Seq(act, c.ListUpdates.Request())
+			}
 		}
 		return act
 	case repoui.RepoRefreshMsg:
 		if c.RefreshRepo(p) {
 			return s.refresh(sh)
 		}
-		s.screen.SetItems(repoListItems(sh, s.sort))
+		s.rebuild(sh)
 	case repoui.RefreshMsg, RescanMsg:
 		return s.refresh(sh)
 	case repoui.FetchDoneMsg:
@@ -112,8 +124,42 @@ func (s *reposState) receive(sh *core.Shared, payload any) core.Action {
 // refresh starts the async rescan and shows the rediscovered rows (muted) right away.
 func (s *reposState) refresh(sh *core.Shared) core.Action {
 	act := Of(sh).StartRefresh()
-	s.screen.SetItems(repoListItems(sh, s.sort))
+	s.rebuild(sh)
 	return act
+}
+
+// Full publications establish the order; intermediate ones only refresh dirty rows.
+func (s *reposState) rebuildItems(sh *core.Shared) []list.Item {
+	c := Of(sh)
+	c.ListUpdates.Reset()
+	clear(c.dirtyRows)
+	items := repoListItems(sh, s.sort)
+	s.order = make([]string, 0, len(items))
+	s.rows = make(map[string]list.Item, len(items))
+	for _, row := range items {
+		key := row.(components.Item).Key
+		s.order = append(s.order, key)
+		s.rows[key] = row
+	}
+	return items
+}
+
+func (s *reposState) rebuild(sh *core.Shared) { s.screen.SetItems(s.rebuildItems(sh)) }
+
+func (s *reposState) publish(sh *core.Shared) {
+	c := Of(sh)
+	for dir := range c.dirtyRows {
+		if i, ok := c.repoIndex[dir]; ok {
+			s.rows[dir] = repoRow(c.Repos[i], c.Pending[dir])
+		}
+	}
+	c.ListUpdates.Reset()
+	clear(c.dirtyRows)
+	items := make([]list.Item, len(s.order))
+	for i, key := range s.order {
+		items[i] = s.rows[key]
+	}
+	s.screen.SetItems(items)
 }
 
 // allScope is the single "repos" scope handed to the all-repos menu: every scanned repo, read

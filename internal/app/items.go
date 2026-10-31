@@ -97,6 +97,7 @@ func repoRow(r repo.Repo, pending bool) components.Item {
 		desc += " · refreshing…"
 	}
 	return components.Item{
+		Key:     r.Dir,
 		Name:    r.Name + repo.StatusMarker(r),
 		Desc:    desc,
 		Pending: pending,

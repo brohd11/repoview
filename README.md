@@ -35,8 +35,9 @@ needing a decision fails cleanly and sends you to a terminal.
 ### `repos` subcommand
 
 Run a shell command in git repos under a directory (the non-interactive counterpart
-to the all-repos screen). The command is joined and run via `sh -c`, so pipes and `&&` work when
-quoted as one argument:
+to the all-repos screen). The command is joined and run via `sh -c` (on Windows, PowerShell:
+`pwsh`, else `powershell.exe`, whose 5.1 has no `&&`), so pipes and `&&` work when quoted as
+one argument:
 
 ```
 repoview repos                          # list first repos found (base-relative paths)
